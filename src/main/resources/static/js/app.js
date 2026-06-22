@@ -7,11 +7,13 @@ createApp({
 
         // 登录相关
         const loginForm = reactive({ account: '', password: '' });
+        const loginSuccess = ref(false);
         const userInfo = ref(null);
 
         // ---------- 登录 ----------
         async function doLogin() {
             errorMsg.value = '';
+            loginSuccess.value = false;
             userInfo.value = null;
 
             if (!loginForm.account.trim()) {
@@ -35,7 +37,14 @@ createApp({
                 });
                 const result = await response.json();
                 if (result.code === 200) {
+                    // 保存到 localStorage
+                    localStorage.setItem('userInfo', JSON.stringify(result.data));
+                    loginSuccess.value = true;
                     userInfo.value = result.data;
+                    // 登录成功后跳转到首页
+                    setTimeout(() => {
+                        window.location.href = '/home.html';
+                    }, 500);
                 } else {
                     errorMsg.value = result.message || '登录失败';
                 }
@@ -48,7 +57,7 @@ createApp({
 
         return {
             loading, errorMsg,
-            loginForm, userInfo, doLogin
+            loginForm, loginSuccess, userInfo, doLogin
         };
     }
 }).mount('#app');
