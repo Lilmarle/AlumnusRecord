@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校友管理系统 - 注册</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="login-container">
+            <h2>校友管理系统注册</h2>
+
+            <!-- ===== 注册表单 ===== -->
+            <div class="form-group">
+                <label>用户名</label>
+                <input v-model="registerForm.username" type="text" placeholder="请输入用户名" @keyup.enter="doRegister">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input v-model="registerForm.password" type="password" placeholder="请输入密码" @keyup.enter="doRegister">
+            </div>
+            <div class="form-group">
+                <label>手机号</label>
+                <input v-model="registerForm.phone" type="text" placeholder="请输入手机号" @keyup.enter="doRegister">
+            </div>
+            <div class="form-group">
+                <label>角色</label>
+                <select v-model="registerForm.role">
+                    <option value="">请选择角色</option>
+                    <option :value="1">学生</option>
+                    <option :value="2">老师</option>
+                    <option :value="3">管理员</option>
+                </select>
+            </div>
+            <button class="login-btn" :disabled="loading" @click="doRegister">
+                {{ loading ? '注册中...' : '注 册' }}
+            </button>
+
+            <!-- 错误消息 -->
+            <div v-if="errorMsg" class="error-msg">{{ errorMsg }}</div>
+
+            <!-- 注册成功提示 -->
+            <div v-if="registerSuccess" class="success-info">
+                <h4>✅ 注册成功</h4>
+                <p><strong>用户ID：</strong>{{ registerResult.userId }}</p>
+                <p><strong>用户名：</strong>{{ registerResult.username }}</p>
+                <p><strong>手机号：</strong>{{ registerResult.phone }}</p>
+                <p><strong>角色：</strong>{{ {1:'学生', 2:'老师', 3:'管理员'}[registerResult.role] }}</p>
+                <p style="margin-top:10px;text-align:center;">
+                    <a @click="goToLogin" style="color:#667eea;cursor:pointer;">前往登录 →</a>
+                </p>
+            </div>
+
+            <!-- 返回登录链接 -->
+            <div class="switch-link" v-if="!registerSuccess">
+                <span>已有账号？</span>
+                <a @click="goToLogin">立即登录</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="/js/register.js"></script>
+</body>
+</html>

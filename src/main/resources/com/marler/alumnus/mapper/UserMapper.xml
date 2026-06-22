@@ -10,4 +10,38 @@
         WHERE username = #{account} OR phone = #{account}
     </select>
 
+    <!-- 根据用户名查询 -->
+    <select id="findByUsername" resultType="com.marler.alumnus.pojo.User">
+        SELECT id, username, password, phone, role, status, create_time AS createTime, update_time AS updateTime
+        FROM user
+        WHERE username = #{username}
+    </select>
+
+    <!-- 根据手机号查询 -->
+    <select id="findByPhone" resultType="com.marler.alumnus.pojo.User">
+        SELECT id, username, password, phone, role, status, create_time AS createTime, update_time AS updateTime
+        FROM user
+        WHERE phone = #{phone}
+    </select>
+
+    <!-- 新增用户 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (username, password, phone, role, status)
+        VALUES (#{username}, #{password}, #{phone}, #{role}, #{status})
+    </insert>
+
+    <!-- 根据ID查询用户 -->
+    <select id="findById" resultType="com.marler.alumnus.pojo.User">
+        SELECT id, username, password, phone, role, status, create_time AS createTime, update_time AS updateTime
+        FROM user
+        WHERE id = #{id}
+    </select>
+
+    <!-- 更新密码 -->
+    <update id="updatePassword">
+        UPDATE user
+        SET password = #{password}
+        WHERE id = #{id}
+    </update>
+
 </mapper>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.marler.alumnus.mapper.UserProfileMapper">
+
+    <!-- 根据用户ID查询档案 -->
+    <select id="findByUserId" resultType="com.marler.alumnus.pojo.UserProfile">
+        SELECT id, user_id AS userId, name, gender, avatar, id_card AS idCard,
+               create_time AS createTime, update_time AS updateTime
+        FROM user_profile
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 更新用户档案（仅更新非空字段） -->
+    <update id="updateUserProfile">
+        UPDATE user_profile
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="idCard != null">id_card = #{idCard},</if>
+        </set>
+        WHERE user_id = #{userId}
+    </update>
+
+</mapper>
