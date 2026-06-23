@@ -214,7 +214,15 @@ public class UserServiceImpl implements UserService {
         int rows = userMapper.updatePassword(userId, encodedNewPassword);
         if (rows > 0) {
             log.info("修改密码成功 - userId: {}", userId);
-            return Result.success("密码修改成功");
+            // 返回详细响应：用户基本信息（不包含密码）
+            Map<String, Object> data = new HashMap<>();
+            data.put("userId", user.getId());
+            data.put("username", user.getUsername());
+            data.put("phone", user.getPhone());
+            data.put("role", user.getRole());
+            data.put("status", user.getStatus());
+            data.put("updateTime", user.getUpdateTime());
+            return Result.success("密码修改成功", data);
         } else {
             log.error("修改密码失败 - 数据库更新异常: userId={}", userId);
             return Result.error("修改密码失败，请稍后重试");
@@ -253,7 +261,19 @@ public class UserServiceImpl implements UserService {
         String blacklistKey = "token:blacklist:" + claims.getSubject();
         stringRedisTemplate.opsForValue().set(blacklistKey, token, remainingTtl, java.util.concurrent.TimeUnit.SECONDS);
 
-        log.info("注销成功 - userId: {}, token 已加入黑名单，剩余有效期: {}秒", claims.getSubject(), remainingTtl);
-        return Result.success("注销成功");
+        // 5. 查询用户信息用于返回
+        String subject = claims.getSubject(); // userId
+        String username = claims.get("username", String.class);
+        Integer userId = Integer.parseInt(subject);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("userId", userId);
+        data.put("username", username);
+        data.put("logoutTime", new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+        data.put("tokenBlacklisted", true);
+        data.put("remainingTtlSeconds", remainingTtl);
+
+        log.info("注销成功 - userId: {}, token 已加入黑名单，剩余有效期: {}秒", userId, remainingTtl);
+        return Result.success("注销成功", data);
     }
 }

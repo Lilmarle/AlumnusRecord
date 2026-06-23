@@ -15,7 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class StudentServiceImpl implements StudentService {
@@ -85,8 +87,42 @@ public class StudentServiceImpl implements StudentService {
             }
         }
 
-        log.info("修改学生信息成功 - studentId: {}, userId: {}", dto.getId(), existingStudent.getUserId());
-        return Result.success("学生信息修改成功");
+        // 5. 重新查询更新后的完整学生信息（关联视图）
+        VStudentInfo updatedInfo = studentMapper.findStudentInfoByUserId(existingStudent.getUserId());
+
+        // 6. 构造详细返回数据
+        Map<String, Object> data = new HashMap<>();
+        data.put("studentId", dto.getId());
+        data.put("userId", existingStudent.getUserId());
+        if (updatedInfo != null) {
+            data.put("name", updatedInfo.getName());
+            data.put("studentNo", updatedInfo.getStudentNo());
+            data.put("gender", updatedInfo.getGender());
+            data.put("collegeName", updatedInfo.getCollegeName());
+            data.put("majorName", updatedInfo.getMajorName());
+            data.put("className", updatedInfo.getClassName());
+            data.put("grade", updatedInfo.getGrade());
+            data.put("enrollDate", updatedInfo.getEnrollDate());
+            data.put("graduateDate", updatedInfo.getGraduateDate());
+            data.put("updateTime", updatedInfo.getUpdateTime());
+        }
+
+        // 记录哪些字段被更新了
+        Map<String, Object> changes = new HashMap<>();
+        boolean hasChanges = false;
+        if (dto.getStudentNo() != null) { changes.put("studentNo", dto.getStudentNo()); hasChanges = true; }
+        if (dto.getCollegeId() != null) { changes.put("collegeId", dto.getCollegeId()); hasChanges = true; }
+        if (dto.getMajorId() != null) { changes.put("majorId", dto.getMajorId()); hasChanges = true; }
+        if (dto.getClassId() != null) { changes.put("classId", dto.getClassId()); hasChanges = true; }
+        if (dto.getEnrollDate() != null) { changes.put("enrollDate", dto.getEnrollDate()); hasChanges = true; }
+        if (dto.getGraduateDate() != null) { changes.put("graduateDate", dto.getGraduateDate()); hasChanges = true; }
+        if (dto.getName() != null) { changes.put("name", dto.getName()); hasChanges = true; }
+        if (dto.getGender() != null) { changes.put("gender", dto.getGender()); hasChanges = true; }
+        if (dto.getIdCard() != null) { changes.put("idCard", dto.getIdCard()); hasChanges = true; }
+        data.put("updatedFields", hasChanges ? changes : "无字段更新");
+
+        log.info("修改学生信息成功 - studentId: {}, userId: {}, 更新字段: {}", dto.getId(), existingStudent.getUserId(), changes.keySet());
+        return Result.success("学生信息修改成功", data);
     }
 
     @Override

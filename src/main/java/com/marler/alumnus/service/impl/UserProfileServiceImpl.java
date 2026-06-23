@@ -10,8 +10,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
-public class UserProfileServiceImpl implements UserProfileService {
+public class UserProfileServiceImpl implements UserProfileService
+{
 
     private static final Logger log = LoggerFactory.getLogger(UserProfileServiceImpl.class);
 
@@ -48,7 +52,44 @@ public class UserProfileServiceImpl implements UserProfileService {
         int rows = userProfileMapper.updateUserProfile(updateProfile);
         if (rows > 0) {
             log.info("修改用户详情成功 - userId: {}", userId);
-            return Result.success("用户详情修改成功");
+
+            // 重新查询更新后的完整档案数据
+            UserProfile updatedProfile = userProfileMapper.findByUserId(userId);
+
+            // 构造详细返回数据
+            Map<String, Object> data = new HashMap<>();
+            data.put("userId", userId);
+            data.put("profileId", updatedProfile.getId());
+            data.put("name", updatedProfile.getName());
+            data.put("gender", updatedProfile.getGender());
+            data.put("avatar", updatedProfile.getAvatar());
+            data.put("idCard", updatedProfile.getIdCard());
+            data.put("createTime", updatedProfile.getCreateTime());
+            data.put("updateTime", updatedProfile.getUpdateTime());
+
+            // 记录哪些字段被更新了
+            Map<String, Object> changes = new HashMap<>();
+            boolean hasChanges = false;
+            if (updateUserProfileDTO.getName() != null) {
+                changes.put("name", updateUserProfileDTO.getName());
+                hasChanges = true;
+            }
+            if (updateUserProfileDTO.getGender() != null) {
+                changes.put("gender", updateUserProfileDTO.getGender());
+                hasChanges = true;
+            }
+            if (updateUserProfileDTO.getAvatar() != null) {
+                changes.put("avatar", updateUserProfileDTO.getAvatar());
+                hasChanges = true;
+            }
+            if (updateUserProfileDTO.getIdCard() != null) {
+                changes.put("idCard", updateUserProfileDTO.getIdCard());
+                hasChanges = true;
+            }
+            data.put("updatedFields", hasChanges ? changes : "无字段更新");
+
+            log.info("修改用户详情成功 - userId: {}, 更新字段: {}", userId, changes.keySet());
+            return Result.success("用户详情修改成功", data);
         } else {
             log.error("修改用户详情失败 - 数据库更新异常: userId={}", userId);
             return Result.error("修改用户详情失败，请稍后重试");

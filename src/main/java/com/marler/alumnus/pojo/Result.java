@@ -10,6 +10,10 @@ public class Result {
 
     private Result() {}
 
+    /**
+     * 成功响应（带数据和自定义消息）
+     * @param data    返回数据
+     */
     public static Result success(Object data) {
         Result result = new Result();
         result.code = 200;
@@ -18,8 +22,24 @@ public class Result {
         return result;
     }
 
+    /**
+     * 成功响应（不带数据）
+     */
     public static Result success() {
         return success(null);
+    }
+
+    /**
+     * 成功响应（带自定义消息和数据）
+     * @param message 自定义成功消息
+     * @param data    返回数据
+     */
+    public static Result success(String message, Object data) {
+        Result result = new Result();
+        result.code = 200;
+        result.message = message;
+        result.data = data;
+        return result;
     }
 
     public static Result error(Integer code, String message) {

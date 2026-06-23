@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.marler.alumnus.mapper.GraduateMapper">
+
+    <!-- 根据用户ID查询毕业生记录 -->
+    <select id="findByUserId" resultType="com.marler.alumnus.pojo.Graduate">
+        SELECT id, student_id AS studentId, user_id AS userId,
+               graduate_year AS graduateYear, destination,
+               destination_detail AS destinationDetail,
+               certificate_no AS certificateNo,
+               create_time AS createTime, update_time AS updateTime
+        FROM graduate
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 根据学生记录ID查询毕业生记录 -->
+    <select id="findByStudentId" resultType="com.marler.alumnus.pojo.Graduate">
+        SELECT id, student_id AS studentId, user_id AS userId,
+               graduate_year AS graduateYear, destination,
+               destination_detail AS destinationDetail,
+               certificate_no AS certificateNo,
+               create_time AS createTime, update_time AS updateTime
+        FROM graduate
+        WHERE student_id = #{studentId}
+    </select>
+
+    <!-- 插入毕业生记录 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO graduate (student_id, user_id, graduate_year, destination, destination_detail, certificate_no)
+        VALUES (#{studentId}, #{userId}, #{graduateYear}, #{destination}, #{destinationDetail}, #{certificateNo})
+    </insert>
+
+    <!-- 查询所有毕业生信息（关联学生、学院、专业、班级、档案） -->
+    <select id="findAll" resultType="com.marler.alumnus.dto.VGraduateInfo">
+        SELECT
+            g.id,
+            g.student_id AS studentId,
+            g.user_id AS userId,
+            g.graduate_year AS graduateYear,
+            g.destination,
+            g.destination_detail AS destinationDetail,
+            g.certificate_no AS certificateNo,
+            s.student_no AS studentNo,
+            up.name,
+            c.college_name AS collegeName,
+            m.major_name AS majorName,
+            cl.class_name AS className,
+            cl.grade,
+            g.create_time AS createTime,
+            g.update_time AS updateTime
+        FROM graduate g
+        LEFT JOIN student s ON g.student_id = s.id
+        LEFT JOIN user_profile up ON g.user_id = up.user_id
+        LEFT JOIN college c ON s.college_id = c.id
+        LEFT JOIN major m ON s.major_id = m.id
+        LEFT JOIN class cl ON s.class_id = cl.id
+        ORDER BY g.graduate_year DESC, g.id ASC
+    </select>
+
+    <!-- 统计毕业生去向分布（按去向分组） -->
+    <select id="countByDestination" resultType="java.util.Map">
+        SELECT
+            g.destination,
+            COUNT(*) AS count
+        FROM graduate g
+        GROUP BY g.destination
+        ORDER BY g.destination ASC
+    </select>
+
+    <!-- 统计毕业生去向分布（按毕业年份和去向分组） -->
+    <select id="countByYearAndDestination" resultType="java.util.Map">
+        SELECT
+            g.graduate_year AS graduateYear,
+            g.destination,
+            COUNT(*) AS count
+        FROM graduate g
+        GROUP BY g.graduate_year, g.destination
+        ORDER BY g.graduate_year DESC, g.destination ASC
+    </select>
+
+    <!-- 统计毕业生去向分布（按学院和去向分组） -->
+    <select id="countByCollegeAndDestination" resultType="java.util.Map">
+        SELECT
+            c.college_name AS collegeName,
+            g.destination,
+            COUNT(*) AS count
+        FROM graduate g
+        LEFT JOIN student s ON g.student_id = s.id
+        LEFT JOIN college c ON s.college_id = c.id
+        GROUP BY c.college_name, g.destination
+        ORDER BY c.college_name ASC, g.destination ASC
+    </select>
+
+    <!-- 获取毕业生总数 -->
+    <select id="totalCount" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM graduate
+    </select>
+
+</mapper>

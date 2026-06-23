@@ -1,5 +1,12 @@
 package com.marler.alumnus.pojo;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 //CREATE TABLE `major` (
 //        `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '专业ID',
 //        `college_id` int(11) NOT NULL COMMENT '所属学院ID',
@@ -14,4 +21,10 @@ package com.marler.alumnus.pojo;
 //CONSTRAINT `fk_major_college_id` FOREIGN KEY (`college_id`) REFERENCES `college`(`id`) ON DELETE CASCADE ON UPDATE CASCADE
 //) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='专业表';
 public class Major {
+    private Integer id;                   // 专业ID
+    private Integer collegeId;            // 所属学院ID
+    private String majorName;             // 专业名称
+    private String code;                  // 专业代号（可选）
+    private String createTime;            // 创建时间
+    private String updateTime;            // 更新时间
 }

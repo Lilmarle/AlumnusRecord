@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.marler.alumnus.mapper.TeacherMapper">
+
+    <!-- 通用结果映射 -->
+    <resultMap id="teacherMap" type="com.marler.alumnus.pojo.Teacher">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="collegeId" column="college_id"/>
+        <result property="title" column="title"/>
+        <result property="employeeNo" column="employee_no"/>
+        <result property="hireDate" column="hire_date"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <!-- 根据用户ID查询教师信息 -->
+    <select id="findByUserId" resultMap="teacherMap">
+        SELECT id, user_id, college_id, title, employee_no,
+               hire_date, create_time, update_time
+        FROM teacher
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 根据教师记录ID查询 -->
+    <select id="findById" resultMap="teacherMap">
+        SELECT id, user_id, college_id, title, employee_no,
+               hire_date, create_time, update_time
+        FROM teacher
+        WHERE id = #{id}
+    </select>
+
+    <!-- 更新教师信息 -->
+    <update id="update">
+        UPDATE teacher
+        SET college_id  = #{collegeId},
+            title       = #{title},
+            employee_no = #{employeeNo},
+            hire_date   = #{hireDate}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据用户ID查询完整的教师信息（使用v_teacher_info视图） -->
+    <select id="findTeacherInfoByUserId" resultType="com.marler.alumnus.dto.VTeacherInfo">
+        SELECT * FROM v_teacher_info
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 查询所有教师的完整信息（管理员使用，使用v_teacher_info视图） -->
+    <select id="findAllTeacherInfo" resultType="com.marler.alumnus.dto.VTeacherInfo">
+        SELECT * FROM v_teacher_info
+        ORDER BY teacher_id ASC
+    </select>
+
+</mapper>
