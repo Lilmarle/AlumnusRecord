@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.marler.alumnus.mapper.CouselorMapper">
+
+    <!-- 通用结果映射 -->
+    <resultMap id="couselorMap" type="com.marler.alumnus.pojo.Couselor">
+        <id property="id" column="id"/>
+        <result property="teacherId" column="teacher_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="hireDate" column="hire_date"/>
+        <result property="isActive" column="is_active"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <!-- 新增辅导员记录 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO counselor (teacher_id, user_id, hire_date, is_active)
+        VALUES (#{teacherId}, #{userId}, #{hireDate}, #{isActive})
+    </insert>
+
+    <!-- 根据用户ID查询辅导员记录 -->
+    <select id="findByUserId" resultMap="couselorMap">
+        SELECT id, teacher_id, user_id, hire_date, is_active,
+               create_time, update_time
+        FROM counselor
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 根据教师记录ID查询辅导员记录 -->
+    <select id="findByTeacherId" resultMap="couselorMap">
+        SELECT id, teacher_id, user_id, hire_date, is_active,
+               create_time, update_time
+        FROM counselor
+        WHERE teacher_id = #{teacherId}
+    </select>
+
+    <!-- 根据辅导员记录ID查询 -->
+    <select id="findById" resultMap="couselorMap">
+        SELECT id, teacher_id, user_id, hire_date, is_active,
+               create_time, update_time
+        FROM counselor
+        WHERE id = #{id}
+    </select>
+
+    <!-- 查询所有辅导员完整信息（使用 v_counselor_info 视图） -->
+    <select id="findAllCounselorInfo" resultType="com.marler.alumnus.dto.VCouselorInfo">
+        SELECT * FROM v_counselor_info
+        ORDER BY counselor_id ASC
+    </select>
+
+    <!-- 根据用户ID查询辅导员完整信息（使用 v_counselor_info 视图） -->
+    <select id="findCounselorInfoByUserId" resultType="com.marler.alumnus.dto.VCouselorInfo">
+        SELECT * FROM v_counselor_info
+        WHERE user_id = #{userId}
+    </select>
+
+</mapper>

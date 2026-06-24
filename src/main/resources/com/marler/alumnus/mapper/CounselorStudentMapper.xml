@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.marler.alumnus.mapper.CounselorStudentMapper">
+
+    <!-- 通用结果映射 -->
+    <resultMap id="counselorStudentMap" type="com.marler.alumnus.pojo.CounselorStudent">
+        <id property="id" column="id"/>
+        <result property="couId" column="cou_id"/>
+        <result property="stuId" column="stu_id"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="isPrimary" column="is_primary"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <!-- 新增辅导员-学生关联记录 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO counselor_student (cou_id, stu_id, start_date, end_date, is_primary)
+        VALUES (#{couId}, #{stuId}, #{startDate}, #{endDate}, #{isPrimary})
+    </insert>
+
+    <!-- 根据关联记录ID查询 -->
+    <select id="findById" resultMap="counselorStudentMap">
+        SELECT id, cou_id, stu_id, start_date, end_date, is_primary,
+               create_time, update_time
+        FROM counselor_student
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据辅导员记录ID查询关联的学生列表 -->
+    <select id="findStudentsByCouId" resultType="java.util.Map">
+        SELECT
+            cs.id AS relationId,
+            cs.cou_id AS couId,
+            cs.stu_id AS stuId,
+            cs.start_date AS startDate,
+            cs.end_date AS endDate,
+            cs.is_primary AS isPrimary,
+            s.student_no AS studentNo,
+            s.user_id AS userId,
+            up.name AS studentName,
+            up.gender,
+            c.college_name AS collegeName,
+            m.major_name AS majorName,
+            cl.class_name AS className,
+            cl.grade
+        FROM counselor_student cs
+        JOIN student s ON cs.stu_id = s.id
+        LEFT JOIN user_profile up ON s.user_id = up.user_id
+        LEFT JOIN college c ON s.college_id = c.id
+        LEFT JOIN major m ON s.major_id = m.id
+        LEFT JOIN class cl ON s.class_id = cl.id
+        WHERE cs.cou_id = #{couId}
+        ORDER BY cs.start_date DESC
+    </select>
+
+    <!-- 根据学生记录ID查询关联的辅导员列表 -->
+    <select id="findCounselorsByStuId" resultType="java.util.Map">
+        SELECT
+            cs.id AS relationId,
+            cs.cou_id AS couId,
+            cs.stu_id AS stuId,
+            cs.start_date AS startDate,
+            cs.end_date AS endDate,
+            cs.is_primary AS isPrimary,
+            t.employee_no AS employeeNo,
+            t.title,
+            c.counselor_id AS counselorId,
+            u.id AS userId,
+            up.name AS counselorName,
+            col.college_name AS collegeName
+        FROM counselor_student cs
+        JOIN counselor c ON cs.cou_id = c.id
+        JOIN teacher t ON c.teacher_id = t.id
+        LEFT JOIN user_profile up ON c.user_id = up.user_id
+        LEFT JOIN college col ON t.college_id = col.id
+        LEFT JOIN user u ON c.user_id = u.id
+        WHERE cs.stu_id = #{stuId}
+        ORDER BY cs.is_primary DESC, cs.start_date DESC
+    </select>
+
+    <!-- 查询所有辅导员-学生关联记录 -->
+    <select id="findAllRelations" resultType="java.util.Map">
+        SELECT
+            cs.id AS relationId,
+            cs.cou_id AS couId,
+            cs.stu_id AS stuId,
+            cs.start_date AS startDate,
+            cs.end_date AS endDate,
+            cs.is_primary AS isPrimary,
+            c.teacher_id AS teacherId,
+            up_cou.name AS counselorName,
+            s.student_no AS studentNo,
+            up_stu.name AS studentName,
+            up_stu.user_id AS studentUserId
+        FROM counselor_student cs
+        JOIN counselor c ON cs.cou_id = c.id
+        JOIN student s ON cs.stu_id = s.id
+        LEFT JOIN user_profile up_cou ON c.user_id = up_cou.user_id
+        LEFT JOIN user_profile up_stu ON s.user_id = up_stu.user_id
+        ORDER BY cs.create_time DESC
+    </select>
+
+    <!-- 检查是否已存在关联（同一辅导员、同一学生、且未结束管理） -->
+    <select id="findActiveRelation" resultMap="counselorStudentMap">
+        SELECT id, cou_id, stu_id, start_date, end_date, is_primary,
+               create_time, update_time
+        FROM counselor_student
+        WHERE cou_id = #{couId}
+          AND stu_id = #{stuId}
+          AND end_date IS NULL
+        LIMIT 1
+    </select>
+
+    <!-- 更新关联记录 -->
+    <update id="update">
+        UPDATE counselor_student
+        SET end_date   = #{endDate},
+            is_primary = #{isPrimary}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除关联记录 -->
+    <delete id="deleteById">
+        DELETE FROM counselor_student
+        WHERE id = #{id}
+    </delete>
+
+    <!-- 根据辅导员记录ID查询该辅导员管理的所有学生记录ID -->
+    <select id="findStuIdsByCouId" resultType="java.lang.Integer">
+        SELECT stu_id
+        FROM counselor_student
+        WHERE cou_id = #{couId}
+          AND end_date IS NULL
+    </select>
+
+</mapper>

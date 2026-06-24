@@ -7,6 +7,7 @@ import com.marler.alumnus.mapper.UserMapper;
 import com.marler.alumnus.mapper.UserProfileMapper;
 import com.marler.alumnus.pojo.Result;
 import com.marler.alumnus.pojo.Student;
+import com.marler.alumnus.pojo.User;
 import com.marler.alumnus.pojo.UserProfile;
 import com.marler.alumnus.service.StudentService;
 import org.slf4j.Logger;
@@ -32,6 +33,56 @@ public class StudentServiceImpl implements StudentService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Override
+    @Transactional
+    public Result add(Student student) {
+        log.debug("开始添加学生 - userId: {}", student.getUserId());
+
+        // 1. 参数校验
+        if (student.getUserId() == null) {
+            log.warn("添加学生失败 - 用户ID为空");
+            return Result.error("用户ID不能为空");
+        }
+        if (student.getStudentNo() == null || student.getStudentNo().isEmpty()) {
+            log.warn("添加学生失败 - 学号为空");
+            return Result.error("学号不能为空");
+        }
+
+        // 2. 检查用户是否存在且角色为学生(role=1)
+        User user = userMapper.findById(student.getUserId());
+        if (user == null) {
+            log.warn("添加学生失败 - 用户不存在: userId={}", student.getUserId());
+            return Result.error("用户不存在");
+        }
+        if (user.getRole() != 1) {
+            log.warn("添加学生失败 - 用户角色不是学生: userId={}, role={}", student.getUserId(), user.getRole());
+            return Result.error("该用户角色不是学生，无法添加为学生记录");
+        }
+
+        // 3. 检查是否已存在该用户的学生记录
+        Student existingStudent = studentMapper.findByUserId(student.getUserId());
+        if (existingStudent != null) {
+            log.warn("添加学生失败 - 该用户已有学生记录: userId={}", student.getUserId());
+            return Result.error("该用户已是学生，不能重复添加");
+        }
+
+        // 4. 执行插入
+        try {
+            int rows = studentMapper.insert(student);
+            if (rows <= 0) {
+                log.error("添加学生失败 - 数据库插入异常");
+                return Result.error("添加学生失败，请稍后重试");
+            }
+        } catch (Exception e) {
+            log.error("添加学生失败 - 数据库异常: {}", e.getMessage());
+            return Result.error("添加学生失败，请稍后重试");
+        }
+
+        log.info("添加学生成功 - id: {}, userId: {}, studentNo: {}",
+                student.getId(), student.getUserId(), student.getStudentNo());
+        return Result.success("学生添加成功", student);
+    }
 
     @Override
     @Transactional

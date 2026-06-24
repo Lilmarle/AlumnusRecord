@@ -7,6 +7,13 @@ import com.marler.alumnus.pojo.Student;
 public interface StudentService {
 
     /**
+     * 添加学生
+     * @param student 学生信息
+     * @return 操作结果
+     */
+    Result add(Student student);
+
+    /**
      * 修改学生信息（支持同时更新 student 表和 user_profile 表）
      */
     Result update(StudentUpdateDTO studentUpdateDTO);

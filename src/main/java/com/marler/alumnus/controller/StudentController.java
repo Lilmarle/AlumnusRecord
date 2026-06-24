@@ -49,6 +49,42 @@ public class StudentController {
     }
 
     /**
+     * 添加学生接口
+     * POST /student/add
+     * 权限：仅管理员(role=3)可用
+     */
+    @PostMapping("/add")
+    public Result add(
+            @RequestHeader("Authorization") String authorization,
+            @RequestBody Student student) {
+        log.info("添加学生请求 - userId: {}, studentNo: {}",
+                student.getUserId(), student.getStudentNo());
+
+        // 1. 解析 Token 获取当前用户信息
+        Integer tokenUserId = getUserIdFromToken(authorization);
+        if (tokenUserId == null) {
+            return Result.unauthorized("未登录或 Token 无效");
+        }
+
+        // 2. 查询用户角色
+        User user = userMapper.findById(tokenUserId);
+        if (user == null) {
+            return Result.unauthorized("用户不存在");
+        }
+
+        // 3. 权限校验：仅管理员(role=3)可添加学生
+        if (user.getRole() < 3) {
+            log.warn("添加学生失败 - 权限不足: userId={}, role={}", tokenUserId, user.getRole());
+            return Result.error("权限不足，仅管理员可添加学生");
+        }
+
+        // 4. 调用 service 层处理
+        Result result = studentService.add(student);
+        log.info("添加学生结果 - code: {}, message: {}", result.getCode(), result.getMessage());
+        return result;
+    }
+
+    /**
      * 修改学生信息接口
      * POST /student/update
      * 支持同时修改 student 表字段和 user_profile 表字段（姓名、性别、头像、身份证号）

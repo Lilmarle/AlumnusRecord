@@ -131,6 +131,29 @@
                         </div>
                     </div>
 
+                    <!-- 辅导员/导师信息卡片 -->
+                    <div v-if="studentInfo" class="info-card">
+                        <h3 class="card-title">👥 辅导员/导师信息</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">辅导员</span>
+                                <span class="info-value">{{ studentInfo.counselorName || '未分配' }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">学业导师</span>
+                                <span class="info-value">{{ studentInfo.supervisorName || '未分配' }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">用户状态</span>
+                                <span class="info-value">
+                                    <span :class="studentInfo.userStatus === 1 ? 'status-badge status-active' : 'status-badge status-inactive'">
+                                        {{ studentInfo.statusName || '未知' }}
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 未找到学生信息时的提示 -->
                     <div v-if="!studentInfo && !errorMsg" class="empty-tip">
                         <p>暂未查询到学生信息</p>
@@ -269,8 +292,32 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- 编辑按钮（教师/管理员） -->
+                    <!-- 辅导员/导师信息卡片（教师/管理员查看） -->
+                    <div v-if="studentInfo" class="info-card">
+                        <h3 class="card-title">👥 辅导员/导师信息</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">辅导员</span>
+                                <span class="info-value">{{ studentInfo.counselorName || '未分配' }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">学业导师</span>
+                                <span class="info-value">{{ studentInfo.supervisorName || '未分配' }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">用户状态</span>
+                                <span class="info-value">
+                                    <span :class="studentInfo.userStatus === 1 ? 'status-badge status-active' : 'status-badge status-inactive'">
+                                        {{ studentInfo.statusName || '未知' }}
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 编辑按钮（教师/管理员） -->
                         <div v-if="!editing" class="action-bar">
                             <button class="login-btn edit-btn" @click="startEdit">✏️ 编辑信息</button>
                         </div>
@@ -767,13 +814,136 @@
             </template>
 
             <!-- =============================================== -->
-            <!-- TAB: 辅导管理 -->
+            <!-- TAB: 辅导员管理 -->
             <!-- =============================================== -->
-            <template v-if="activeTab === 'counsel' && !loading">
-                <div class="empty-tip">
-                    <p style="font-size: 48px; margin-bottom: 16px;">💬</p>
-                    <p>辅导管理功能开发中...</p>
-                    <p class="empty-sub">此模块将用于管理学生辅导记录与咨询</p>
+            <template v-if="activeTab === 'counselor' && !loading && isTeacherOrAdmin">
+                <!-- 辅导员列表 -->
+                <div class="info-card" v-if="!showCounselorStudents">
+                    <h3 class="card-title">🧑‍🏫 辅导员列表</h3>
+                    <div class="search-bar" style="margin-bottom:16px;">
+                        <span class="search-count">共 {{ counselorList.length }} 名辅导员</span>
+                    </div>
+
+                    <div v-if="counselorList.length > 0" class="student-list">
+                        <div v-for="c in counselorList" :key="c.counselorId" class="student-list-item">
+                            <div class="list-item-info">
+                                <div class="list-item-name">
+                                    {{ c.realName || '未知' }}
+                                    <span class="list-item-gender" v-if="c.gender === 1">♂</span>
+                                    <span class="list-item-gender" v-else-if="c.gender === 2">♀</span>
+                                </div>
+                                <div class="list-item-detail">
+                                    {{ c.employeeNo || '无工号' }} · {{ c.collegeName || '-' }} · {{ c.title || '-' }}
+                                </div>
+                                <div class="list-item-detail" style="margin-top:4px;">
+                                    担任辅导员：{{ c.counselorHireDate || '-' }} ·
+                                    <span :style="{ color: c.isActive ? '#27ae60' : '#e74c3c', fontWeight: 500 }">
+                                        {{ c.isActiveName || (c.isActive ? '在职' : '离职') }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="list-item-actions" v-if="isAdmin">
+                                <button class="btn btn-sm btn-outline" @click="fetchStudentsByCounselor(c)" style="margin-right:6px;">
+                                    👥 查看学生
+                                </button>
+                                <button class="btn btn-sm btn-primary" @click="openAddCounselorStudent(c)">
+                                    ➕ 关联学生
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="empty-tip">
+                        <p style="font-size: 48px; margin-bottom: 16px;">🧑‍🏫</p>
+                        <p>暂无辅导员数据</p>
+                        <p class="empty-sub">请先在教师管理中确认教师信息，然后通过 API 添加辅导员</p>
+                    </div>
+                </div>
+
+                <!-- 辅导员管理的学��列表详情 -->
+                <div class="info-card" v-if="showCounselorStudents && selectedCounselor">
+                    <h3 class="card-title">
+                        👥 {{ selectedCounselor.realName || '未知' }} 管理的学生
+                        <button class="btn btn-sm btn-outline" @click="closeCounselorStudents" style="float:right;">
+                            ← 返回列表
+                        </button>
+                        <button class="btn btn-sm btn-primary" @click="openAddCounselorStudent(selectedCounselor)" style="float:right; margin-right:8px;">
+                            ➕ 关联学生
+                        </button>
+                    </h3>
+
+                    <div v-if="counselorStudents.length > 0" class="student-list">
+                        <div v-for="s in counselorStudents" :key="s.relationId" class="student-list-item">
+                            <div class="list-item-info">
+                                <div class="list-item-name">
+                                    {{ s.studentName || '未知' }}
+                                    <span class="list-item-gender" v-if="s.gender === 1">♂</span>
+                                    <span class="list-item-gender" v-else-if="s.gender === 2">♀</span>
+                                </div>
+                                <div class="list-item-detail">
+                                    {{ s.studentNo || '无学号' }} · {{ s.collegeName || '-' }} · {{ s.majorName || '-' }} · {{ s.className || '-' }}
+                                </div>
+                                <div class="list-item-detail" style="margin-top:4px;">
+                                    开始管理：{{ s.startDate || '-' }}
+                                    <span v-if="s.endDate" style="margin-left:12px;color:#e74c3c;">
+                                        已结束：{{ s.endDate }}
+                                    </span>
+                                    <span v-else style="margin-left:12px;color:#27ae60;font-weight:500;">
+                                        管理中
+                                    </span>
+                                    <span v-if="s.isPrimary" style="margin-left:12px;color:#f39c12;font-weight:500;">
+                                        [主要辅导员]
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="list-item-actions" v-if="isAdmin && !s.endDate">
+                                <button class="btn btn-sm btn-danger" @click="endCounselorRelation(s)">
+                                    结束管理
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="empty-tip">
+                        <p style="font-size: 48px; margin-bottom: 16px;">👥</p>
+                        <p>该辅导员暂无关联的学生</p>
+                    </div>
+                </div>
+
+                <!-- 添加辅导员-学生关联弹窗 -->
+                <div v-if="showAddCounselorStudentModal" class="modal-overlay" @click.self="closeAddCounselorStudentModal">
+                    <div class="modal-content" style="max-width:500px;">
+                        <div class="modal-header">
+                            <h3>➕ 关联学生</h3>
+                            <button class="modal-close" @click="closeAddCounselorStudentModal">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>辅导员</label>
+                                <input type="text" :value="selectedCounselor?.realName || ''" disabled style="background:#f5f5f5;">
+                            </div>
+                            <div class="form-group">
+                                <label>学生记录ID</label>
+                                <input v-model="counselorStudentForm.stuId" type="number" placeholder="请输入学生记录ID">
+                            </div>
+                            <div class="form-group">
+                                <label>开始管理日期</label>
+                                <input v-model="counselorStudentForm.startDate" type="date">
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input v-model="counselorStudentForm.isPrimary" type="checkbox">
+                                    设置为主要辅导员
+                                </label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-outline" @click="closeAddCounselorStudentModal">取消</button>
+                            <button class="btn btn-primary" @click="submitAddCounselorStudent" :disabled="counselorStudentAddLoading">
+                                {{ counselorStudentAddLoading ? '提交中...' : '确认关联' }}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </template>
 

@@ -3,6 +3,14 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.marler.alumnus.mapper.StudentMapper">
 
+    <!-- 新增学生记录 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO student (user_id, student_no, college_id, major_id, class_id,
+                             enroll_date, graduate_date)
+        VALUES (#{userId}, #{studentNo}, #{collegeId}, #{majorId}, #{classId},
+                #{enrollDate}, #{graduateDate})
+    </insert>
+
     <!-- 根据用户ID查询学生信息 -->
     <select id="findByUserId" resultType="com.marler.alumnus.pojo.Student">
         SELECT id, user_id AS userId, student_no AS studentNo,
@@ -35,62 +43,56 @@
         WHERE id = #{id}
     </update>
 
-    <!-- 根据用户ID查询完整的学生信息（关联学院、专业、班级、档案） -->
+    <!-- 根据用户ID查询完整的学生信息（关联学院、专业、班级、档案、辅导员、导师） -->
     <select id="findStudentInfoByUserId" resultType="com.marler.alumnus.dto.VStudentInfo">
         SELECT
-            s.id AS studentId,
-            s.user_id AS userId,
-            s.student_no AS studentNo,
-            s.college_id AS collegeId,
-            c.college_name AS collegeName,
-            s.major_id AS majorId,
-            m.major_name AS majorName,
-            s.class_id AS classId,
-            cl.class_name AS className,
-            cl.grade,
-            up.name,
-            up.gender,
-            up.avatar,
-            up.id_card AS idCard,
-            s.enroll_date AS enrollDate,
-            s.graduate_date AS graduateDate,
-            s.create_time AS createTime,
-            s.update_time AS updateTime
-        FROM student s
-        LEFT JOIN college c ON s.college_id = c.id
-        LEFT JOIN major m ON s.major_id = m.id
-        LEFT JOIN class cl ON s.class_id = cl.id
-        LEFT JOIN user_profile up ON s.user_id = up.user_id
-        WHERE s.user_id = #{userId}
+            student_id AS studentId,
+            user_id AS userId,
+            student_no AS studentNo,
+            phone,
+            user_status AS userStatus,
+            status_name AS statusName,
+            real_name AS name,
+            gender,
+            gender_name AS genderName,
+            avatar,
+            id_card AS idCard,
+            college_name AS collegeName,
+            major_name AS majorName,
+            class_name AS className,
+            grade,
+            enroll_date AS enrollDate,
+            graduate_date AS graduateDate,
+            counselor_name AS counselorName,
+            supervisor_name AS supervisorName
+        FROM v_student_info
+        WHERE user_id = #{userId}
     </select>
 
     <!-- 查询所有学生的完整信息（教师/管理员使用） -->
     <select id="findAllStudentInfo" resultType="com.marler.alumnus.dto.VStudentInfo">
         SELECT
-            s.id AS studentId,
-            s.user_id AS userId,
-            s.student_no AS studentNo,
-            s.college_id AS collegeId,
-            c.college_name AS collegeName,
-            s.major_id AS majorId,
-            m.major_name AS majorName,
-            s.class_id AS classId,
-            cl.class_name AS className,
-            cl.grade,
-            up.name,
-            up.gender,
-            up.avatar,
-            up.id_card AS idCard,
-            s.enroll_date AS enrollDate,
-            s.graduate_date AS graduateDate,
-            s.create_time AS createTime,
-            s.update_time AS updateTime
-        FROM student s
-        LEFT JOIN college c ON s.college_id = c.id
-        LEFT JOIN major m ON s.major_id = m.id
-        LEFT JOIN class cl ON s.class_id = cl.id
-        LEFT JOIN user_profile up ON s.user_id = up.user_id
-        ORDER BY s.id ASC
+            student_id AS studentId,
+            user_id AS userId,
+            student_no AS studentNo,
+            phone,
+            user_status AS userStatus,
+            status_name AS statusName,
+            real_name AS name,
+            gender,
+            gender_name AS genderName,
+            avatar,
+            id_card AS idCard,
+            college_name AS collegeName,
+            major_name AS majorName,
+            class_name AS className,
+            grade,
+            enroll_date AS enrollDate,
+            graduate_date AS graduateDate,
+            counselor_name AS counselorName,
+            supervisor_name AS supervisorName
+        FROM v_student_info
+        ORDER BY student_id ASC
     </select>
 
 </mapper>

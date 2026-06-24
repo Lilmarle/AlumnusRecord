@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.marler.alumnus.mapper.SupervisorMapper">
+
+    <!-- 通用结果映射 -->
+    <resultMap id="supervisorMap" type="com.marler.alumnus.pojo.Supervisor">
+        <id property="id" column="id"/>
+        <result property="teacherId" column="teacher_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="supervisorType" column="supervisor_type"/>
+        <result property="isActive" column="is_active"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <!-- 新增导师记录 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO supervisor (teacher_id, user_id, supervisor_type, is_active)
+        VALUES (#{teacherId}, #{userId}, #{supervisorType}, #{isActive})
+    </insert>
+
+    <!-- 根据ID查询 -->
+    <select id="findById" resultMap="supervisorMap">
+        SELECT id, teacher_id, user_id, supervisor_type, is_active,
+               create_time, update_time
+        FROM supervisor
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据用户ID查询导师记录 -->
+    <select id="findByUserId" resultMap="supervisorMap">
+        SELECT id, teacher_id, user_id, supervisor_type, is_active,
+               create_time, update_time
+        FROM supervisor
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 根据教师ID查询导师记录 -->
+    <select id="findByTeacherId" resultMap="supervisorMap">
+        SELECT id, teacher_id, user_id, supervisor_type, is_active,
+               create_time, update_time
+        FROM supervisor
+        WHERE teacher_id = #{teacherId}
+    </select>
+
+    <!-- 查询所有导师信息（使用 v_supervisor_info 视图） -->
+    <select id="findAll" resultType="com.marler.alumnus.dto.VSupervisorInfo">
+        SELECT * FROM v_supervisor_info
+        ORDER BY supervisor_id ASC
+    </select>
+
+    <!-- 根据用户ID查询导师完整信息（使用 v_supervisor_info 视图） -->
+    <select id="findByUserIdFull" resultType="com.marler.alumnus.dto.VSupervisorInfo">
+        SELECT * FROM v_supervisor_info
+        WHERE user_id = #{userId}
+    </select>
+
+</mapper>

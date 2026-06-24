@@ -11,6 +11,11 @@ import java.util.List;
 public interface StudentMapper {
 
     /**
+     * 新增学生记录
+     */
+    int insert(Student student);
+
+    /**
      * 根据用户ID查询学生信息
      */
     Student findByUserId(@Param("userId") Integer userId);

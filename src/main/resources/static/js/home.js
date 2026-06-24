@@ -9,12 +9,12 @@ createApp({
         const activeTab = ref('student');
 
         const tabList = [
-            { key: 'student',  label: '学生管理', icon: '👤' },
-            { key: 'teacher',  label: '教师管理', icon: '👨‍🏫' },
-            { key: 'graduate', label: '毕业生管理', icon: '🎓' },
-            { key: 'counsel',  label: '辅导管理', icon: '💬' },
-            { key: 'article',  label: '文章审核', icon: '📝' },
-            { key: 'activity', label: '活动审核', icon: '🎪' }
+            { key: 'student',   label: '学生管理', icon: '👤' },
+            { key: 'teacher',   label: '教师管理', icon: '👨‍🏫' },
+            { key: 'graduate',  label: '毕业生管理', icon: '🎓' },
+            { key: 'counselor', label: '辅导员管理', icon: '🧑‍🏫' },
+            { key: 'article',   label: '文章审核', icon: '📝' },
+            { key: 'activity',  label: '活动审核', icon: '🎪' }
         ];
 
         function switchTab(key) {
@@ -81,6 +81,20 @@ createApp({
         const teacherSaveLoading = ref(false);
         const teacherSaveSuccess = ref(false);
         const showTeacherModal = ref(false);
+
+        // ---------- 辅导员管理 ----------
+        const counselorList = ref([]);
+        const selectedCounselor = ref(null);
+        const counselorStudents = ref([]);
+        const showCounselorStudents = ref(false);
+        const showAddCounselorStudentModal = ref(false);
+        const counselorStudentForm = reactive({
+            couId: null,
+            stuId: null,
+            startDate: new Date().toISOString().slice(0, 10),
+            isPrimary: true
+        });
+        const counselorStudentAddLoading = ref(false);
 
         // 搜索关键词（教师/管理员使用）
         const searchKeyword = ref('');
@@ -782,6 +796,133 @@ createApp({
             }
         }
 
+        // ---------- 查询所有辅导员列表（管理员） ----------
+        async function fetchAllCounselors() {
+            try {
+                const response = await fetch('/couselor/list', {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+                const result = await response.json();
+                if (result.code === 200) {
+                    counselorList.value = result.data || [];
+                } else if (result.code === 401) {
+                    localStorage.removeItem('userInfo');
+                    window.location.href = '/index.html';
+                }
+            } catch (err) {
+                console.error('查询辅导员列表异常', err);
+            }
+        }
+
+        // ---------- 查询辅导员管理的学生列表 ----------
+        async function fetchStudentsByCounselor(counselor) {
+            selectedCounselor.value = counselor;
+            showCounselorStudents.value = true;
+            try {
+                const response = await fetch('/counselor-student/list-by-counselor?couId=' + counselor.counselorId, {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+                const result = await response.json();
+                if (result.code === 200) {
+                    counselorStudents.value = result.data || [];
+                } else if (result.code === 401) {
+                    localStorage.removeItem('userInfo');
+                    window.location.href = '/index.html';
+                }
+            } catch (err) {
+                console.error('查询辅导员管理的学生列表异常', err);
+            }
+        }
+
+        // ---------- 关闭辅导员学生列表 ----------
+        function closeCounselorStudents() {
+            showCounselorStudents.value = false;
+            selectedCounselor.value = null;
+            counselorStudents.value = [];
+        }
+
+        // ---------- 打开添加辅导员-学生关联弹窗 ----------
+        function openAddCounselorStudent(counselor) {
+            counselorStudentForm.couId = counselor.counselorId;
+            counselorStudentForm.stuId = null;
+            counselorStudentForm.startDate = new Date().toISOString().slice(0, 10);
+            counselorStudentForm.isPrimary = true;
+            showAddCounselorStudentModal.value = true;
+        }
+
+        // ---------- 关闭添加关联弹窗 ----------
+        function closeAddCounselorStudentModal() {
+            showAddCounselorStudentModal.value = false;
+            counselorStudentForm.couId = null;
+            counselorStudentForm.stuId = null;
+        }
+
+        // ---------- 提交添加辅导员-学生关联 ----------
+        async function submitAddCounselorStudent() {
+            if (!counselorStudentForm.stuId) {
+                alert('请选择要关联的学生');
+                return;
+            }
+            counselorStudentAddLoading.value = true;
+            try {
+                const response = await fetch('/counselor-student/add', {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({
+                        couId: counselorStudentForm.couId,
+                        stuId: counselorStudentForm.stuId,
+                        startDate: counselorStudentForm.startDate,
+                        isPrimary: counselorStudentForm.isPrimary
+                    })
+                });
+                const result = await response.json();
+                if (result.code === 200) {
+                    alert('辅导员-学生关联添加成功');
+                    closeAddCounselorStudentModal();
+                    // 刷新学生列表
+                    if (selectedCounselor.value) {
+                        await fetchStudentsByCounselor(selectedCounselor.value);
+                    }
+                } else {
+                    alert(result.message || '添加失败');
+                }
+            } catch (err) {
+                console.error('添加辅导员-学生关联异常', err);
+                alert('添加关联失败，请稍后重试');
+            } finally {
+                counselorStudentAddLoading.value = false;
+            }
+        }
+
+        // ---------- 结束辅导员管理学生 ----------
+        async function endCounselorRelation(relation) {
+            if (!confirm('确定结束该辅导员对此学生的管理吗？')) return;
+            try {
+                const response = await fetch('/counselor-student/end', {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({
+                        id: relation.relationId,
+                        endDate: new Date().toISOString().slice(0, 10)
+                    })
+                });
+                const result = await response.json();
+                if (result.code === 200) {
+                    alert('已结束管理');
+                    if (selectedCounselor.value) {
+                        await fetchStudentsByCounselor(selectedCounselor.value);
+                    }
+                } else {
+                    alert(result.message || '操作失败');
+                }
+            } catch (err) {
+                console.error('结束管理异常', err);
+                alert('操作失败，请稍后重试');
+            }
+        }
+
         // ---------- 退出登录 ----------
         async function doLogout() {
             loading.value = true;
@@ -824,6 +965,9 @@ createApp({
                     if (role === 2) {
                         fetchMyTeacherInfo();
                     }
+                    if (role >= 2) {
+                        fetchAllCounselors();
+                    }
                 } else {
                     // 学生：加载自己的学生信息
                     fetchMyStudentInfo();
@@ -863,6 +1007,14 @@ createApp({
             destinationMap,
             destinationStats, statsLoading,
             fetchAllGraduates, fetchMyGraduateInfo, fetchDestinationStatistics,
+            // 辅导员管理
+            counselorList, fetchAllCounselors,
+            selectedCounselor, counselorStudents,
+            showCounselorStudents, showAddCounselorStudentModal,
+            counselorStudentForm, counselorStudentAddLoading,
+            fetchStudentsByCounselor, closeCounselorStudents,
+            openAddCounselorStudent, closeAddCounselorStudentModal,
+            submitAddCounselorStudent, endCounselorRelation,
             // 侧边栏 Tab
             activeTab, tabList, switchTab
         };
