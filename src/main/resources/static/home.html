@@ -173,7 +173,10 @@
                         <!-- 搜索栏 -->
                         <div class="search-bar">
                             <input v-model="searchKeyword" type="text" placeholder="搜索姓名、学号、学院、专业、班级..." class="search-input">
-                            <span class="search-count">共 {{ filteredStudentList.length }} 名学生</span>
+                            <span class="search-count">
+                                <template v-if="userInfo && userInfo.role === 2">共 {{ filteredStudentList.length }} 名我辅导的学生</template>
+                                <template v-else>共 {{ filteredStudentList.length }} 名学生</template>
+                            </span>
                         </div>
 
                         <!-- 学生列表 -->
@@ -330,137 +333,79 @@
             <!-- =============================================== -->
             <template v-if="activeTab === 'teacher' && !loading">
 
-                <!-- 教师视图（role=2）：查看自己的信息 -->
-                <template v-if="userInfo && userInfo.role === 2">
-                    <!-- 账号信息卡片 -->
-                    <div v-if="teacherInfo" class="info-card">
-                        <h3 class="card-title">👤 账号信息</h3>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <span class="info-label">用户名</span>
-                                <span class="info-value">{{ teacherInfo.username || '-' }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">手机号</span>
-                                <span class="info-value">{{ teacherInfo.phone || '-' }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">状态</span>
-                                <span class="info-value">{{ teacherInfo.statusName || '-' }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 个人信息卡片 -->
-                    <div v-if="teacherInfo" class="info-card">
-                        <h3 class="card-title">📋 个人信息</h3>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <span class="info-label">姓名</span>
-                                <span class="info-value">{{ teacherInfo.realName || '-' }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">性别</span>
-                                <span class="info-value">{{ teacherInfo.genderName || '-' }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">身份证号</span>
-                                <span class="info-value">{{ teacherInfo.idCard || '-' }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">工号</span>
-                                <span class="info-value">{{ teacherInfo.employeeNo || '-' }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 教师信息卡片 -->
-                    <div v-if="teacherInfo" class="info-card">
-                        <h3 class="card-title">🏫 教师信息</h3>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <span class="info-label">学院</span>
-                                <span class="info-value">{{ teacherInfo.collegeName || '-' }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">职称</span>
-                                <span class="info-value">{{ teacherInfo.title || '-' }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">入职时间</span>
-                                <span class="info-value">{{ teacherInfo.hireDate || '-' }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 编辑按钮 -->
-                    <div v-if="teacherInfo && !teacherEditing" class="action-bar">
-                        <button class="login-btn edit-btn" @click="startTeacherEdit">✏️ 编辑信息</button>
-                    </div>
-
-                    <!-- 编辑表单 -->
-                    <div v-if="teacherEditing" class="info-card">
-                        <h3 class="card-title">✏️ 编辑个人信息</h3>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>姓名</label>
-                                <input v-model="teacherEditForm.name" type="text" placeholder="请输入姓名">
-                            </div>
-                            <div class="form-group">
-                                <label>性别</label>
-                                <select v-model="teacherEditForm.gender">
-                                    <option :value="null">请选择</option>
-                                    <option :value="1">男</option>
-                                    <option :value="2">女</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>身份证号</label>
-                                <input v-model="teacherEditForm.idCard" type="text" placeholder="请输入身份证号">
-                            </div>
-                            <div class="form-group">
-                                <label>工号</label>
-                                <input v-model="teacherEditForm.employeeNo" type="text" placeholder="请输入工号">
-                            </div>
-                            <div class="form-group">
-                                <label>学院</label>
-                                <select v-model="teacherEditForm.collegeId">
-                                    <option :value="null">请选择学院</option>
-                                    <option v-for="c in colleges" :key="c.id" :value="c.id">
-                                        {{ c.collegeName }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>职称</label>
-                                <input v-model="teacherEditForm.title" type="text" placeholder="请输入职称">
-                            </div>
-                            <div class="form-group">
-                                <label>入职时间</label>
-                                <input v-model="teacherEditForm.hireDate" type="date">
+                <!-- 非管理员视图（role<=2）：仅可查看教师信息 -->
+                <template v-if="userInfo && userInfo.role <= 2">
+                    <!-- 教师（role=2）：查看自己的信息 -->
+                    <template v-if="userInfo.role === 2">
+                        <!-- 账号信息卡片 -->
+                        <div v-if="teacherInfo" class="info-card">
+                            <h3 class="card-title">👤 账号信息</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">用户名</span>
+                                    <span class="info-value">{{ teacherInfo.username || '-' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">手机号</span>
+                                    <span class="info-value">{{ teacherInfo.phone || '-' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">状态</span>
+                                    <span class="info-value">{{ teacherInfo.statusName || '-' }}</span>
+                                </div>
                             </div>
                         </div>
 
-                        <div v-if="teacherSaveSuccess" class="success-info" style="margin-top:16px;">
-                            <h4>✅ 修改成功</h4>
+                        <!-- 个人信息卡片 -->
+                        <div v-if="teacherInfo" class="info-card">
+                            <h3 class="card-title">📋 个人信息</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">姓名</span>
+                                    <span class="info-value">{{ teacherInfo.realName || '-' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">性别</span>
+                                    <span class="info-value">{{ teacherInfo.genderName || '-' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">身份证号</span>
+                                    <span class="info-value">{{ teacherInfo.idCard || '-' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">工号</span>
+                                    <span class="info-value">{{ teacherInfo.employeeNo || '-' }}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div v-if="errorMsg && !teacherSaveSuccess" class="error-msg" style="margin-bottom:12px;">{{ errorMsg }}</div>
 
-                        <div class="action-bar" style="margin-top:16px;">
-                            <button class="nav-btn" @click="cancelTeacherEdit">取消</button>
-                            <button class="login-btn" :disabled="teacherSaveLoading" @click="saveTeacherEdit" style="width:auto;padding:10px 24px;margin-left:8px;">
-                                {{ teacherSaveLoading ? '保存中...' : '💾 保存修改' }}
-                            </button>
+                        <!-- 教师信息卡片 -->
+                        <div v-if="teacherInfo" class="info-card">
+                            <h3 class="card-title">🏫 教师信息</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">学院</span>
+                                    <span class="info-value">{{ teacherInfo.collegeName || '-' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">职称</span>
+                                    <span class="info-value">{{ teacherInfo.title || '-' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">入职时间</span>
+                                    <span class="info-value">{{ teacherInfo.hireDate || '-' }}</span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- 未找到教师信息时的提示 -->
-                    <div v-if="!teacherInfo && !errorMsg" class="empty-tip">
-                        <p>暂未查询到教师信息</p>
-                        <p class="empty-sub">请联系管理员完善您的教师档案信息</p>
-                    </div>
+                        <!-- 未找到教师信息时的提示 -->
+                        <div v-if="!teacherInfo && !errorMsg" class="empty-tip">
+                            <p>暂未查询到教师信息</p>
+                            <p class="empty-sub">请联系管理员完善您的教师档案信息</p>
+                        </div>
+                    </template>
 
-                    <!-- 所有教师列表（教师也可查看） -->
+                    <!-- 全体教师列表（role<=2均可查看） -->
                     <div v-if="filteredTeacherList.length > 0" class="info-card" style="margin-top:20px;">
                         <h3 class="card-title">👥 全体教师列表</h3>
                         <!-- 搜索栏 -->
@@ -486,6 +431,11 @@
                                 <div class="list-item-arrow" @click.stop>→</div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- 空列表提示 -->
+                    <div v-if="filteredTeacherList.length === 0 && userInfo.role !== 2" class="empty-tip">
+                        <p>暂无教师数据</p>
                     </div>
                 </template>
 

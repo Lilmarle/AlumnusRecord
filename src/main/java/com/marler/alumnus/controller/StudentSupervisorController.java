@@ -7,25 +7,15 @@ import com.marler.alumnus.pojo.User;
 import com.marler.alumnus.service.StudentSupervisorService;
 import com.marler.alumnus.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@Slf4j
 @RestController
-@RequestMapping("/student-supervisor")
 public class StudentSupervisorController {
-
-    private static final Logger log = LoggerFactory.getLogger(StudentSupervisorController.class);
 
     @Autowired
     private StudentSupervisorService studentSupervisorService;
@@ -33,117 +23,115 @@ public class StudentSupervisorController {
     @Autowired
     private UserMapper userMapper;
 
-    private Integer getUserIdFromToken(String authorization) {
-        if (authorization == null || !authorization.startsWith("Bearer ")) return null;
-        try {
-            String token = authorization.substring(7);
-            Claims claims = JwtUtils.parseToken(token);
-            return Integer.valueOf(claims.getSubject());
-        } catch (Exception e) {
-            log.warn("Token 解析失败: {}", e.getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * 添加导师-学生关联
-     * POST /student-supervisor/add
-     * 权限：仅管理员(role=3)
-     */
-    @PostMapping("/add")
+    @PostMapping("/student-supervisor/add")
     public Result add(
             @RequestHeader("Authorization") String authorization,
             @RequestBody StudentSupervisor studentSupervisor) {
-        log.info("添加导师-学生关联请求 - supId: {}, stuId: {}",
-                studentSupervisor.getSupId(), studentSupervisor.getStuId());
+        try {
+            log.info("添加导师-学生关联请求 - supId: {}, stuId: {}",
+                    studentSupervisor.getSupId(), studentSupervisor.getStuId());
 
-        Integer tokenUserId = getUserIdFromToken(authorization);
-        if (tokenUserId == null) return Result.unauthorized("未登录或 Token 无效");
+            Claims claims = JwtUtils.parseToken(authorization.replace("Bearer ", ""));
+            Integer tokenUserId = Integer.valueOf(claims.getSubject());
 
-        User user = userMapper.findById(tokenUserId);
-        if (user == null) return Result.unauthorized("用户不存在");
-        if (user.getRole() < 3) return Result.error("权限不足，仅管理员可添加导师-学生关联");
+            User user = userMapper.findById(tokenUserId);
+            if (user == null) return Result.error("用户不存在");
+            if (user.getRole() < 3) return Result.error("权限不足，仅管理员可添加导师-学生关联");
 
-        return studentSupervisorService.add(studentSupervisor);
+            return studentSupervisorService.add(studentSupervisor);
+        } catch (Exception e) {
+            log.error("添加导师-学生关联失败", e);
+            return Result.error("添加导师-学生关联失败：" + e.getMessage());
+        }
     }
 
-    /**
-     * 根据导师记录ID查询其指导的学生列表
-     * GET /student-supervisor/list-by-supervisor?supId=xxx
-     */
-    @GetMapping("/list-by-supervisor")
+    @GetMapping("/student-supervisor/list-by-supervisor")
     public Result getStudentsBySupervisor(
             @RequestHeader("Authorization") String authorization,
             @RequestParam("supId") Integer supId) {
-        Integer tokenUserId = getUserIdFromToken(authorization);
-        if (tokenUserId == null) return Result.unauthorized("未登录或 Token 无效");
-        User user = userMapper.findById(tokenUserId);
-        if (user == null) return Result.unauthorized("用户不存在");
-        if (user.getRole() < 2) return Result.error("权限不足");
-        return studentSupervisorService.getStudentsBySupervisor(supId);
+        try {
+            Claims claims = JwtUtils.parseToken(authorization.replace("Bearer ", ""));
+            Integer tokenUserId = Integer.valueOf(claims.getSubject());
+
+            User user = userMapper.findById(tokenUserId);
+            if (user == null) return Result.error("用户不存在");
+            if (user.getRole() < 2) return Result.error("权限不足");
+
+            return studentSupervisorService.getStudentsBySupervisor(supId);
+        } catch (Exception e) {
+            log.error("查询导师指导的学生列表失败", e);
+            return Result.error("查询失败：" + e.getMessage());
+        }
     }
 
-    /**
-     * 根据学生记录ID查询其所属的导师列表
-     * GET /student-supervisor/list-by-student?stuId=xxx
-     */
-    @GetMapping("/list-by-student")
+    @GetMapping("/student-supervisor/list-by-student")
     public Result getSupervisorsByStudent(
             @RequestHeader("Authorization") String authorization,
             @RequestParam("stuId") Integer stuId) {
-        Integer tokenUserId = getUserIdFromToken(authorization);
-        if (tokenUserId == null) return Result.unauthorized("未登录或 Token 无效");
-        return studentSupervisorService.getSupervisorsByStudent(stuId);
+        try {
+            JwtUtils.parseToken(authorization.replace("Bearer ", ""));
+            return studentSupervisorService.getSupervisorsByStudent(stuId);
+        } catch (Exception e) {
+            log.error("查询学生的导师列表失败", e);
+            return Result.error("查询失败：" + e.getMessage());
+        }
     }
 
-    /**
-     * 查询所有导师-学生关联记录
-     * GET /student-supervisor/list
-     */
-    @GetMapping("/list")
+    @GetMapping("/student-supervisor/list")
     public Result getAllRelations(@RequestHeader("Authorization") String authorization) {
-        Integer tokenUserId = getUserIdFromToken(authorization);
-        if (tokenUserId == null) return Result.unauthorized("未登录或 Token 无效");
-        User user = userMapper.findById(tokenUserId);
-        if (user == null) return Result.unauthorized("用户不存在");
-        if (user.getRole() < 2) return Result.error("权限不足");
-        return studentSupervisorService.getAllRelations();
+        try {
+            Claims claims = JwtUtils.parseToken(authorization.replace("Bearer ", ""));
+            Integer tokenUserId = Integer.valueOf(claims.getSubject());
+
+            User user = userMapper.findById(tokenUserId);
+            if (user == null) return Result.error("用户不存在");
+            if (user.getRole() < 2) return Result.error("权限不足");
+
+            return studentSupervisorService.getAllRelations();
+        } catch (Exception e) {
+            log.error("查询所有关联记录失败", e);
+            return Result.error("查询失败：" + e.getMessage());
+        }
     }
 
-    /**
-     * 结束导师对学生的指导
-     * POST /student-supervisor/end
-     */
-    @PostMapping("/end")
+    @PostMapping("/student-supervisor/end")
     public Result endRelation(
             @RequestHeader("Authorization") String authorization,
             @RequestBody Map<String, Object> params) {
-        Integer id = params.get("id") != null ? Integer.valueOf(params.get("id").toString()) : null;
-        String endDate = params.get("endDate") != null ? params.get("endDate").toString() : null;
+        try {
+            Integer id = params.get("id") != null ? Integer.valueOf(params.get("id").toString()) : null;
+            String endDate = params.get("endDate") != null ? params.get("endDate").toString() : null;
 
-        Integer tokenUserId = getUserIdFromToken(authorization);
-        if (tokenUserId == null) return Result.unauthorized("未登录或 Token 无效");
-        User user = userMapper.findById(tokenUserId);
-        if (user == null) return Result.unauthorized("用户不存在");
-        if (user.getRole() < 3) return Result.error("权限不足，仅管理员可操作");
+            Claims claims = JwtUtils.parseToken(authorization.replace("Bearer ", ""));
+            Integer tokenUserId = Integer.valueOf(claims.getSubject());
 
-        return studentSupervisorService.endRelation(id, endDate);
+            User user = userMapper.findById(tokenUserId);
+            if (user == null) return Result.error("用户不存在");
+            if (user.getRole() < 3) return Result.error("权限不足，仅管理员可操作");
+
+            return studentSupervisorService.endRelation(id, endDate);
+        } catch (Exception e) {
+            log.error("结束导师指导失败", e);
+            return Result.error("操作失败：" + e.getMessage());
+        }
     }
 
-    /**
-     * 删除导师-学生关联记录
-     * DELETE /student-supervisor/delete
-     */
-    @DeleteMapping("/delete")
+    @DeleteMapping("/student-supervisor/delete")
     public Result deleteRelation(
             @RequestHeader("Authorization") String authorization,
             @RequestParam("id") Integer id) {
-        Integer tokenUserId = getUserIdFromToken(authorization);
-        if (tokenUserId == null) return Result.unauthorized("未登录或 Token 无效");
-        User user = userMapper.findById(tokenUserId);
-        if (user == null) return Result.unauthorized("用户不存在");
-        if (user.getRole() < 3) return Result.error("权限不足，仅管理员可操作");
+        try {
+            Claims claims = JwtUtils.parseToken(authorization.replace("Bearer ", ""));
+            Integer tokenUserId = Integer.valueOf(claims.getSubject());
 
-        return studentSupervisorService.deleteRelation(id);
+            User user = userMapper.findById(tokenUserId);
+            if (user == null) return Result.error("用户不存在");
+            if (user.getRole() < 3) return Result.error("权限不足，仅管理员可操作");
+
+            return studentSupervisorService.deleteRelation(id);
+        } catch (Exception e) {
+            log.error("删除导师-学生关联失败", e);
+            return Result.error("删除失败：" + e.getMessage());
+        }
     }
 }

@@ -39,7 +39,7 @@ class UserControllerTest {
     // ==================== 登录成功测试 ====================
 
     @Test
-    void testLogin_WithValidUsername_ShouldReturn200() throws Exception {
+    void testLogin_WithValidUsername_ShouldReturn1() throws Exception {
         // 准备
         LoginDTO loginDTO = new LoginDTO();
         loginDTO.setAccount("zhangsan");
@@ -59,7 +59,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.code").value(1))
                 .andExpect(jsonPath("$.message").value("操作成功"))
                 .andExpect(jsonPath("$.data.token").value("jwt-token-value"))
                 .andExpect(jsonPath("$.data.userId").value(1))
@@ -71,7 +71,7 @@ class UserControllerTest {
     }
 
     @Test
-    void testLogin_WithValidPhone_ShouldReturn200() throws Exception {
+    void testLogin_WithValidPhone_ShouldReturn1() throws Exception {
         // 准备
         LoginDTO loginDTO = new LoginDTO();
         loginDTO.setAccount("13800138000");
@@ -91,7 +91,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.code").value(1))
                 .andExpect(jsonPath("$.data.token").isString())
                 .andExpect(jsonPath("$.data.username").value("zhangsan"));
 

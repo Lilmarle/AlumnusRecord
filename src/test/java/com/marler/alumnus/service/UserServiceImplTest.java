@@ -204,7 +204,7 @@ class UserServiceImplTest {
         Result result = userService.login("testuser", "123456");
 
         // 验证
-        assertEquals(200, result.getCode(), "登录成功应返回状态码 200");
+        assertEquals(1, result.getCode(), "登录成功应返回状态码 1");
         assertEquals("操作成功", result.getMessage());
 
         assertNotNull(result.getData(), "登录成功应返回 data");
@@ -238,7 +238,7 @@ class UserServiceImplTest {
         Result result = userService.login("13600136000", "mypassword");
 
         // 验证
-        assertEquals(200, result.getCode(), "手机号登录成功应返回 200");
+        assertEquals(1, result.getCode(), "手机号登录成功应返回 1");
         assertNotNull(((java.util.Map<String, Object>) result.getData()).get("token"));
         assertEquals("phoneuser", ((java.util.Map<String, Object>) result.getData()).get("username"));
 

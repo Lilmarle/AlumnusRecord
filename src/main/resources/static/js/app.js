@@ -36,7 +36,7 @@ createApp({
                     })
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     // 保存到 localStorage
                     localStorage.setItem('userInfo', JSON.stringify(result.data));
                     loginSuccess.value = true;

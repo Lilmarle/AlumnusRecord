@@ -43,7 +43,7 @@ createApp({
                     })
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     changeSuccess.value = true;
                 } else {
                     errorMsg.value = result.message || '修改密码失败';

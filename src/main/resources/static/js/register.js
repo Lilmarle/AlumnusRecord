@@ -45,7 +45,7 @@ createApp({
                     })
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     registerSuccess.value = true;
                     registerResult.value = result.data;
                 } else {

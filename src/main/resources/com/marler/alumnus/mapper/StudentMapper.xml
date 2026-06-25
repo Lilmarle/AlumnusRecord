@@ -64,7 +64,9 @@
             enroll_date AS enrollDate,
             graduate_date AS graduateDate,
             counselor_name AS counselorName,
-            supervisor_name AS supervisorName
+            supervisor_name AS supervisorName,
+            create_time AS createTime,
+            update_time AS updateTime
         FROM v_student_info
         WHERE user_id = #{userId}
     </select>
@@ -90,7 +92,9 @@
             enroll_date AS enrollDate,
             graduate_date AS graduateDate,
             counselor_name AS counselorName,
-            supervisor_name AS supervisorName
+            supervisor_name AS supervisorName,
+            create_time AS createTime,
+            update_time AS updateTime
         FROM v_student_info
         ORDER BY student_id ASC
     </select>

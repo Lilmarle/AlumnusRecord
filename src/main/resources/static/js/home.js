@@ -193,7 +193,7 @@ createApp({
                     headers: getHeaders()
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     studentInfo.value = result.data;
                 } else if (result.code === 401) {
                     // Token 无效，跳转回登录页
@@ -210,7 +210,7 @@ createApp({
             }
         }
 
-        // ---------- 查询所有学生列表（教师/管理员） ----------
+        // ---------- 查询所有学生列表（管理员使用） ----------
         async function fetchAllStudents() {
             loading.value = true;
             errorMsg.value = '';
@@ -221,7 +221,7 @@ createApp({
                     headers: getHeaders()
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     studentList.value = result.data || [];
                 } else if (result.code === 401) {
                     localStorage.removeItem('userInfo');
@@ -235,6 +235,110 @@ createApp({
             } finally {
                 loading.value = false;
             }
+        }
+
+        // ---------- 查询我辅导/指导的学生列表（教师角色查看自己指导的学生） ----------
+        async function fetchMySupervisedStudents() {
+            loading.value = true;
+            errorMsg.value = '';
+            const userId = userInfo.value?.userId;
+            if (!userId) {
+                errorMsg.value = '未获取到用户信息，请重新登录';
+                loading.value = false;
+                return;
+            }
+
+            const studentMap = new Map(); // 用 userId 去重
+
+            try {
+                // 1. 查询辅导员信息
+                const counselorResp = await fetch(`/couselor/info?userId=${userId}`, {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+                const counselorResult = await counselorResp.json();
+                if (counselorResult.code === 1 && counselorResult.data) {
+                    const counselorId = counselorResult.data.counselorId;
+                    if (counselorId) {
+                        // 查询该辅导员管理的学生列表
+                        const stuResp = await fetch(`/counselor-student/list-by-counselor?couId=${counselorId}`, {
+                            method: 'GET',
+                            headers: getHeaders()
+                        });
+                        const stuResult = await stuResp.json();
+                        if (stuResult.code === 1 && Array.isArray(stuResult.data)) {
+                            stuResult.data.forEach(item => {
+                                if (item.userId && !studentMap.has(item.userId)) {
+                                    studentMap.set(item.userId, {
+                                        userId: item.userId,
+                                        name: item.studentName || '未知',
+                                        gender: item.gender,
+                                        studentNo: item.studentNo || '',
+                                        collegeName: item.collegeName || '',
+                                        majorName: item.majorName || '',
+                                        className: item.className || '',
+                                        grade: item.grade || '',
+                                        // 标记来源
+                                        _source: 'counselor'
+                                    });
+                                }
+                            });
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('查询辅导员信息异常', err);
+            }
+
+            try {
+                // 2. 查询导师信息
+                const supervisorResp = await fetch(`/supervisor/info?userId=${userId}`, {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+                const supervisorResult = await supervisorResp.json();
+                if (supervisorResult.code === 1 && supervisorResult.data) {
+                    const supervisorId = supervisorResult.data.supervisorId;
+                    if (supervisorId) {
+                        // 查询该导师指导的学生列表
+                        const stuResp = await fetch(`/student-supervisor/list-by-supervisor?supId=${supervisorId}`, {
+                            method: 'GET',
+                            headers: getHeaders()
+                        });
+                        const stuResult = await stuResp.json();
+                        if (stuResult.code === 1 && Array.isArray(stuResult.data)) {
+                            stuResult.data.forEach(item => {
+                                if (item.userId && !studentMap.has(item.userId)) {
+                                    studentMap.set(item.userId, {
+                                        userId: item.userId,
+                                        name: item.studentName || '未知',
+                                        gender: item.gender,
+                                        studentNo: item.studentNo || '',
+                                        collegeName: item.collegeName || '',
+                                        majorName: item.majorName || '',
+                                        className: item.className || '',
+                                        grade: item.grade || '',
+                                        // 标记来源
+                                        _source: 'supervisor'
+                                    });
+                                }
+                            });
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('查询导师信息异常', err);
+            }
+
+            // 3. 转换为数组
+            studentList.value = Array.from(studentMap.values());
+
+            // 4. 如果既不是辅导员也不是导师，显示提示
+            if (studentList.value.length === 0) {
+                errorMsg.value = '您目前没有辅导或指导的学生';
+            }
+
+            loading.value = false;
         }
 
         // ---------- 查询自己的教师信息（教师角色查看自己的信息） ----------
@@ -253,7 +357,7 @@ createApp({
                     headers: getHeaders()
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     teacherInfo.value = result.data;
                 } else if (result.code === 401) {
                     localStorage.removeItem('userInfo');
@@ -280,7 +384,7 @@ createApp({
                     headers: getHeaders()
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     teacherList.value = result.data || [];
                 } else if (result.code === 401) {
                     localStorage.removeItem('userInfo');
@@ -311,7 +415,7 @@ createApp({
                     headers: getHeaders()
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     teacherInfo.value = result.data;
                 } else {
                     errorMsg.value = result.message || '查询教师详情失败';
@@ -393,7 +497,7 @@ createApp({
                     })
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     teacherSaveSuccess.value = true;
                     // 重新查询详情
                     if (selectedTeacher.value) {
@@ -439,7 +543,7 @@ createApp({
                     headers: getHeaders()
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     studentInfo.value = result.data;
                 } else {
                     errorMsg.value = result.message || '查询学生详情失败';
@@ -492,7 +596,7 @@ createApp({
                     headers: getHeaders()
                 });
                 const result = await response.json();
-                if (result.code === 200 && result.data) {
+                if (result.code === 1 && result.data) {
                     colleges.value = result.data.colleges || [];
                     majors.value = result.data.majors || [];
                     classes.value = result.data.classes || [];
@@ -588,7 +692,7 @@ createApp({
                     })
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     saveSuccess.value = true;
                     // 重新查询详情
                     if (selectedStudent.value) {
@@ -629,7 +733,7 @@ createApp({
                     headers: getHeaders()
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     graduateList.value = result.data || [];
                 } else if (result.code === 401) {
                     localStorage.removeItem('userInfo');
@@ -654,7 +758,7 @@ createApp({
                     headers: getHeaders()
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     myGraduateInfo.value = result.data;
                 }
             } catch (err) {
@@ -779,7 +883,7 @@ createApp({
                     headers: getHeaders()
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     destinationStats.value = result.data;
                     // 等待 Vue 更新 DOM 后渲染图表
                     Vue.nextTick(() => {
@@ -804,7 +908,7 @@ createApp({
                     headers: getHeaders()
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     counselorList.value = result.data || [];
                 } else if (result.code === 401) {
                     localStorage.removeItem('userInfo');
@@ -825,7 +929,7 @@ createApp({
                     headers: getHeaders()
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     counselorStudents.value = result.data || [];
                 } else if (result.code === 401) {
                     localStorage.removeItem('userInfo');
@@ -878,7 +982,7 @@ createApp({
                     })
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     alert('辅导员-学生关联添加成功');
                     closeAddCounselorStudentModal();
                     // 刷新学生列表
@@ -909,7 +1013,7 @@ createApp({
                     })
                 });
                 const result = await response.json();
-                if (result.code === 200) {
+                if (result.code === 1) {
                     alert('已结束管理');
                     if (selectedCounselor.value) {
                         await fetchStudentsByCounselor(selectedCounselor.value);
@@ -955,24 +1059,28 @@ createApp({
                 fetchDictData();
                 const role = userInfo.value?.role;
                 if (role >= 2) {
-                    // 教师/管理员：加载学生列表和教师列表
-                    fetchAllStudents();
+                    // 管理员（role=3）：加载所有学生列表
+                    if (role === 3) {
+                        fetchAllStudents();
+                    }
+                    // 教师（role=2）：只加载我辅导/指导的学生
+                    if (role === 2) {
+                        fetchMySupervisedStudents();
+                        fetchMyTeacherInfo();
+                    }
                     fetchAllTeachers();
                     // 加载毕业生列表（教师/管理员查看所有毕业生）
                     fetchAllGraduates();
                     // 加载毕业生去向统计
                     fetchDestinationStatistics();
-                    if (role === 2) {
-                        fetchMyTeacherInfo();
-                    }
-                    if (role >= 2) {
-                        fetchAllCounselors();
-                    }
+                    fetchAllCounselors();
                 } else {
                     // 学生：加载自己的学生信息
                     fetchMyStudentInfo();
                     // 学生查看自己的毕业生记录
                     fetchMyGraduateInfo();
+                    // 学生也可以查看教师列表
+                    fetchAllTeachers();
                 }
             }, 0);
         });

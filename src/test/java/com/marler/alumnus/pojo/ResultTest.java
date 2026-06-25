@@ -15,7 +15,7 @@ class ResultTest {
     // ==================== success() ====================
 
     @Test
-    void testSuccess_WithData_ShouldReturn200AndMessage() {
+    void testSuccess_WithData_ShouldReturn1AndMessage() {
         // 准备
         Map<String, Object> data = new HashMap<>();
         data.put("key", "value");
@@ -24,30 +24,30 @@ class ResultTest {
         Result result = Result.success(data);
 
         // 验证
-        assertEquals(200, result.getCode(), "成功状态码应为 200");
+        assertEquals(1, result.getCode(), "成功状态码应为 1");
         assertEquals("操作成功", result.getMessage(), "成功消息应为 '操作成功'");
         assertNotNull(result.getData(), "返回数据不应为 null");
         assertEquals("value", ((Map<String, Object>) result.getData()).get("key"));
     }
 
     @Test
-    void testSuccess_WithNullData_ShouldReturn200() {
+    void testSuccess_WithNullData_ShouldReturn1() {
         // 执行
         Result result = Result.success(null);
 
         // 验证
-        assertEquals(200, result.getCode());
+        assertEquals(1, result.getCode());
         assertEquals("操作成功", result.getMessage());
         assertNull(result.getData(), "传入 null 时 data 应为 null");
     }
 
     @Test
-    void testSuccess_NoArgs_ShouldReturn200AndNullData() {
+    void testSuccess_NoArgs_ShouldReturn1AndNullData() {
         // 执行
         Result result = Result.success();
 
         // 验证
-        assertEquals(200, result.getCode());
+        assertEquals(1, result.getCode());
         assertEquals("操作成功", result.getMessage());
         assertNull(result.getData(), "无参 success() 的 data 应为 null");
     }
@@ -135,7 +135,7 @@ class ResultTest {
 
         Result result = Result.success(data);
 
-        assertEquals(200, result.getCode());
+        assertEquals(1, result.getCode());
         assertEquals("操作成功", result.getMessage());
 
         Map<String, Object> resultData = (Map<String, Object>) result.getData();

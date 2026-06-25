@@ -16,7 +16,7 @@ public class Result {
      */
     public static Result success(Object data) {
         Result result = new Result();
-        result.code = 200;
+        result.code = 1;
         result.message = "操作成功";
         result.data = data;
         return result;
@@ -36,7 +36,7 @@ public class Result {
      */
     public static Result success(String message, Object data) {
         Result result = new Result();
-        result.code = 200;
+        result.code = 1;
         result.message = message;
         result.data = data;
         return result;
