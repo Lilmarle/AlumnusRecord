@@ -1,0 +1,109 @@
+.home-page {
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+.top-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #1a3a5c;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  z-index: 100;
+}
+
+.nav-title {
+  font-size: 18px;
+  color: #ffffff;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-greeting {
+  font-size: 14px;
+  color: #d0d8e3;
+}
+
+.nav-btn {
+  padding: 7px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  background: transparent;
+  color: #ffffff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.nav-btn-logout {
+  border-color: rgba(231, 76, 60, 0.6);
+  color: #ff8a80;
+}
+
+.nav-btn-logout:hover {
+  background: #c62828;
+  border-color: #c62828;
+  color: white;
+}
+
+.home-main {
+  padding-top: 100px;
+  display: flex;
+  justify-content: center;
+}
+
+.welcome-card {
+  background: white;
+  border-radius: 8px;
+  padding: 40px 60px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.welcome-card h2 {
+  color: #1a3a5c;
+  margin-bottom: 16px;
+}
+
+.welcome-card p {
+  color: #666;
+  font-size: 14px;
+}
+
+.role-badge {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 6px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.admin-badge {
+  background: #fce4ec;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+
+.teacher-badge {
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #90caf9;
+}
