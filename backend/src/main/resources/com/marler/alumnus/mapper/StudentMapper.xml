@@ -31,15 +31,17 @@
         WHERE id = #{id}
     </select>
 
-    <!-- 更新学生信息 -->
+    <!-- 更新学生信息（动态 SQL，仅更新非空字段） -->
     <update id="update">
         UPDATE student
-        SET student_no    = #{studentNo},
-            college_id    = #{collegeId},
-            major_id      = #{majorId},
-            class_id      = #{classId},
-            enroll_date   = #{enrollDate},
-            graduate_date = #{graduateDate}
+        <set>
+            <if test="studentNo != null">student_no = #{studentNo},</if>
+            <if test="collegeId != null">college_id = #{collegeId},</if>
+            <if test="majorId != null">major_id = #{majorId},</if>
+            <if test="classId != null">class_id = #{classId},</if>
+            <if test="enrollDate != null">enroll_date = #{enrollDate},</if>
+            <if test="graduateDate != null">graduate_date = #{graduateDate},</if>
+        </set>
         WHERE id = #{id}
     </update>
 
@@ -64,9 +66,11 @@
             enroll_date AS enrollDate,
             graduate_date AS graduateDate,
             counselor_name AS counselorName,
+            counselor_avatar AS counselorAvatar,
+            counselor_title AS counselorTitle,
             supervisor_name AS supervisorName,
-            create_time AS createTime,
-            update_time AS updateTime
+            supervisor_avatar AS supervisorAvatar,
+            supervisor_title AS supervisorTitle
         FROM v_student_info
         WHERE user_id = #{userId}
     </select>
@@ -92,9 +96,11 @@
             enroll_date AS enrollDate,
             graduate_date AS graduateDate,
             counselor_name AS counselorName,
+            counselor_avatar AS counselorAvatar,
+            counselor_title AS counselorTitle,
             supervisor_name AS supervisorName,
-            create_time AS createTime,
-            update_time AS updateTime
+            supervisor_avatar AS supervisorAvatar,
+            supervisor_title AS supervisorTitle
         FROM v_student_info
         ORDER BY student_id ASC
     </select>

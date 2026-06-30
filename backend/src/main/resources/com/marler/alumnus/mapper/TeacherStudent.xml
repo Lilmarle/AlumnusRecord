@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.marler.alumnus.mapper.TeacherStudentMapper">
+
+    <resultMap id="teacherStudentMap" type="com.marler.alumnus.pojo.TeacherStudent">
+        <id property="id" column="id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="teacherId" column="teacher_id"/>
+        <result property="type" column="type"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <!-- 根据教师ID和类型查询关联的学生列表 -->
+    <select id="findStudentsByTeacherId" resultType="java.util.Map">
+        SELECT
+            ts.id AS relationId,
+            ts.student_id AS stuId,
+            ts.teacher_id AS teacherId,
+            ts.type,
+            s.student_no AS studentNo,
+            s.user_id AS userId,
+            up.name AS studentName,
+            up.gender,
+            c.college_name AS collegeName,
+            m.major_name AS majorName,
+            cl.class_name AS className,
+            cl.grade
+        FROM teacher_student ts
+        JOIN student s ON ts.student_id = s.id
+        LEFT JOIN user_profile up ON s.user_id = up.user_id
+        LEFT JOIN college c ON s.college_id = c.id
+        LEFT JOIN major m ON s.major_id = m.id
+        LEFT JOIN class cl ON s.class_id = cl.id
+        WHERE ts.teacher_id = #{teacherId}
+          AND ts.type = #{type}
+        ORDER BY ts.create_time DESC
+    </select>
+
+</mapper>

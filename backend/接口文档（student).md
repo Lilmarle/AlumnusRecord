@@ -74,8 +74,6 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 | `idCard` | `String` | 身份证号 |
 | `enrollDate` | `String` | 入校时间 |
 | `graduateDate` | `String` | 毕业时间（可为空） |
-| `createTime` | `String` | 创建时间 |
-| `updateTime` | `String` | 更新时间 |
 
 **成功响应示例：**
 
@@ -101,7 +99,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
         "enrollDate": "2024-09-01",
         "graduateDate": null,
         "createTime": "2024-09-01 08:00:00",
-        "updateTime": "2024-09-01 08:00:00"
+        "enrollDate": "2024-09-01",
+        "graduateDate": null
     }
 }
 ```

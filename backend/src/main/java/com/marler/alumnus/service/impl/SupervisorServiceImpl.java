@@ -101,10 +101,18 @@ public class SupervisorServiceImpl implements SupervisorService {
             return Result.error("用户ID不能为空");
         }
 
+        // 先查教师记录（只要是教师就能查到）
+        Teacher teacher = teacherMapper.findByUserId(targetUserId);
+        if (teacher == null) {
+            log.warn("查询导师信息失败 - 未找到教师记录: userId={}", targetUserId);
+            return Result.error("未找到该教师的记录");
+        }
+
+        // 再查导师记录，没有导师记录只是说明没有指导学生
         VSupervisorInfo info = supervisorMapper.findByUserIdFull(targetUserId);
         if (info == null) {
-            log.warn("查询导师信息失败 - 未找到该教师的导师信息: userId={}", targetUserId);
-            return Result.error("未找到该教师的导师信息");
+            log.info("该教师尚未被设置为导师，返回教师基本信息 - userId: {}", targetUserId);
+            return Result.success(null);
         }
 
         log.info("查询导师信息成功 - userId: {}, realName: {}", targetUserId, info.getRealName());

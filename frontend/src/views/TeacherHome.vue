@@ -1,179 +1,10 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { get, post } from '@/api/index.js'
-import '@/assets/home.css'
-
-const router = useRouter()
-const userInfo = ref(null)
-const activeTab = ref('students') // students, graduates, profile
-
-// 教师信息
-const teacherInfo = ref(null)
-const supervisorInfo = ref(null)
-const students = ref([])
-const graduates = ref([])
-
-// 个人信息编辑
-const editMode = ref(false)
-const editForm = ref({
-  name: '',
-  gender: null,
-  phone: '',
-  title: '',
-  employeeNo: ''
-})
-
-// 加载状态
-const loading = ref({
-  students: false,
-  graduates: false,
-  profile: false
-})
-
-const roleMap = { 1: '学生', 2: '老师', 3: '管理员' }
-
-onMounted(async () => {
-  const raw = localStorage.getItem('userInfo')
-  if (raw) {
-    userInfo.value = JSON.parse(raw)
-  }
-  // 加载教师信息
-  await loadTeacherInfo()
-  // 默认加载学生列表
-  if (activeTab.value === 'students') {
-    await loadStudents()
-  }
-})
-
-// 加载教师信息
-async function loadTeacherInfo() {
-  try {
-    const res = await get('/teacher/info')
-    if (res.code === 1) {
-      teacherInfo.value = res.data
-      editForm.value = {
-        name: res.data.realName || '',
-        gender: res.data.gender,
-        phone: res.data.phone || '',
-        title: res.data.title || '',
-        employeeNo: res.data.employeeNo || ''
-      }
-    }
-  } catch (e) {
-    console.error('获取教师信息失败:', e)
-  }
-}
-
-// 获取导师记录ID
-async function getSupervisorId() {
-  if (supervisorInfo.value) return supervisorInfo.value.supervisorId
-  try {
-    const res = await get('/supervisor/info')
-    if (res.code === 1) {
-      supervisorInfo.value = res.data
-      return res.data.supervisorId
-    }
-  } catch (e) {
-    console.error('获取导师信息失败:', e)
-  }
-  return null
-}
-
-// 加载学生列表
-async function loadStudents() {
-  loading.value.students = true
-  students.value = []
-  try {
-    const supId = await getSupervisorId()
-    if (!supId) {
-      loading.value.students = false
-      return
-    }
-    const res = await get('/student-supervisor/list-by-supervisor', { supId })
-    if (res.code === 1) {
-      students.value = res.data || []
-    }
-  } catch (e) {
-    console.error('获取学生列表失败:', e)
-  } finally {
-    loading.value.students = false
-  }
-}
-
-// 加载毕业生列表
-async function loadGraduates() {
-  loading.value.graduates = true
-  graduates.value = []
-  try {
-    const res = await get('/graduate/list')
-    if (res.code === 1) {
-      graduates.value = res.data || []
-    }
-  } catch (e) {
-    console.error('获取毕业生列表失败:', e)
-  } finally {
-    loading.value.graduates = false
-  }
-}
-
-// 切换标签
-async function switchTab(tab) {
-  activeTab.value = tab
-  if (tab === 'students' && students.value.length === 0) {
-    await loadStudents()
-  } else if (tab === 'graduates' && graduates.value.length === 0) {
-    await loadGraduates()
-  } else if (tab === 'profile' && !teacherInfo.value) {
-    await loadTeacherInfo()
-  }
-}
-
-// 保存个人信息
-async function saveProfile() {
-  try {
-    const payload = {
-      id: teacherInfo.value.teacherId,
-      name: editForm.value.name,
-      gender: editForm.value.gender,
-      title: editForm.value.title,
-      employeeNo: editForm.value.employeeNo
-    }
-    const res = await post('/teacher/update', payload)
-    if (res.code === 1) {
-      editMode.value = false
-      await loadTeacherInfo()
-      alert('个人信息修改成功')
-    } else {
-      alert(res.message || '修改失败')
-    }
-  } catch (e) {
-    alert('保存失败: ' + e.message)
-  }
-}
-
-// 取消编辑
-function cancelEdit() {
-  editMode.value = false
-  if (teacherInfo.value) {
-    editForm.value = {
-      name: teacherInfo.value.realName || '',
-      gender: teacherInfo.value.gender,
-      phone: teacherInfo.value.phone || '',
-      title: teacherInfo.value.title || '',
-      employeeNo: teacherInfo.value.employeeNo || ''
-    }
-  }
-}
-
-// 去向文本映射
-const destinationMap = { 1: '就业', 2: '考公', 3: '考研' }
-
-function logout() {
-  localStorage.removeItem('token')
-  localStorage.removeItem('userInfo')
-  router.push('/')
-}
+import { useTeacherHome } from './js/teacher-home.js'
+const {
+  userInfo, activeTab, teacherInfo, students, graduates,
+  editMode, editForm, loading, roleMap, destinationMap, genderMap,
+  notSupervisor, switchTab, saveProfile, cancelEdit, logout
+} = useTeacherHome()
 </script>
 
 <template>
@@ -184,41 +15,31 @@ function logout() {
         <span class="user-greeting" v-if="userInfo">
           {{ userInfo.username }}（{{ roleMap[userInfo.role] || '未知' }}）
         </span>
-        <button class="nav-btn nav-btn-logout" @click="logout">退出登录</button>
+        <el-button type="danger" plain size="small" @click="logout">退出登录</el-button>
       </div>
     </header>
 
     <div class="home-layout">
       <!-- 左侧边栏 -->
-      <aside class="sidebar">
+      <el-menu
+        :default-active="activeTab"
+        class="sidebar-menu"
+        @select="switchTab"
+      >
         <div class="sidebar-header">功能导航</div>
-        <nav class="sidebar-nav">
-          <button
-            class="sidebar-btn"
-            :class="{ active: activeTab === 'students' }"
-            @click="switchTab('students')"
-          >
-            <span class="sidebar-icon">📋</span>
-            学生管理
-          </button>
-          <button
-            class="sidebar-btn"
-            :class="{ active: activeTab === 'graduates' }"
-            @click="switchTab('graduates')"
-          >
-            <span class="sidebar-icon">🎓</span>
-            毕业生管理
-          </button>
-          <button
-            class="sidebar-btn"
-            :class="{ active: activeTab === 'profile' }"
-            @click="switchTab('profile')"
-          >
-            <span class="sidebar-icon">👤</span>
-            个人信息
-          </button>
-        </nav>
-      </aside>
+        <el-menu-item index="students">
+          <el-icon><Document /></el-icon>
+          <span>学生管理</span>
+        </el-menu-item>
+        <el-menu-item index="graduates">
+          <el-icon><Reading /></el-icon>
+          <span>毕业生管理</span>
+        </el-menu-item>
+        <el-menu-item index="profile">
+          <el-icon><User /></el-icon>
+          <span>个人信息</span>
+        </el-menu-item>
+      </el-menu>
 
       <!-- 主内容区 -->
       <main class="home-main-content">
@@ -228,42 +49,39 @@ function logout() {
             <h2>学生管理</h2>
             <span class="tab-desc">我指导的学生列表</span>
           </div>
-          <div class="content-card">
-            <div v-if="loading.students" class="loading-tip">加载中...</div>
-            <div v-else-if="students.length === 0" class="empty-tip">
-              暂无指导的学生记录
-            </div>
-            <table v-else class="data-table">
-              <thead>
-                <tr>
-                  <th>学号</th>
-                  <th>姓名</th>
-                  <th>性别</th>
-                  <th>学院</th>
-                  <th>专业</th>
-                  <th>班级</th>
-                  <th>年级</th>
-                  <th>状态</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(stu, idx) in students" :key="idx">
-                  <td>{{ stu.studentNo || '-' }}</td>
-                  <td>{{ stu.name || stu.studentName || '-' }}</td>
-                  <td>{{ stu.genderName || '-' }}</td>
-                  <td>{{ stu.collegeName || '-' }}</td>
-                  <td>{{ stu.majorName || '-' }}</td>
-                  <td>{{ stu.className || '-' }}</td>
-                  <td>{{ stu.grade ? stu.grade + '年级' : '-' }}</td>
-                  <td>
-                    <span class="status-badge" :class="stu.userStatus === 1 ? 'status-active' : 'status-inactive'">
-                      {{ stu.statusName || (stu.userStatus === 1 ? '在校' : '离校') }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <el-card shadow="never">
+            <el-table
+              :data="students"
+              v-loading="loading.students"
+              border
+              stripe
+              style="width: 100%"
+              empty-text="暂无指导的学生记录"
+            >
+              <el-table-column prop="studentNo" label="学号" width="120" />
+              <el-table-column label="姓名" width="100">
+                <template #default="{ row }">
+                  {{ row.name || row.studentName || '-' }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="genderName" label="性别" width="60" />
+              <el-table-column prop="collegeName" label="学院" min-width="120" />
+              <el-table-column prop="majorName" label="专业" min-width="120" />
+              <el-table-column prop="className" label="班级" min-width="100" />
+              <el-table-column label="年级" width="80">
+                <template #default="{ row }">
+                  {{ row.grade ? row.grade + '年级' : '-' }}
+                </template>
+              </el-table-column>
+              <el-table-column label="状态" width="80">
+                <template #default="{ row }">
+                  <el-tag :type="row.userStatus === 1 ? 'success' : 'info'" size="small">
+                    {{ row.statusName || (row.userStatus === 1 ? '在校' : '离校') }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-card>
         </div>
 
         <!-- 毕业生管理 -->
@@ -272,42 +90,31 @@ function logout() {
             <h2>毕业生管理</h2>
             <span class="tab-desc">查看毕业生信息</span>
           </div>
-          <div class="content-card">
-            <div v-if="loading.graduates" class="loading-tip">加载中...</div>
-            <div v-else-if="graduates.length === 0" class="empty-tip">
-              暂无毕业生记录
-            </div>
-            <table v-else class="data-table">
-              <thead>
-                <tr>
-                  <th>学号</th>
-                  <th>姓名</th>
-                  <th>学院</th>
-                  <th>专业</th>
-                  <th>毕业年份</th>
-                  <th>去向</th>
-                  <th>去向详情</th>
-                  <th>毕业证编号</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(grad, idx) in graduates" :key="idx">
-                  <td>{{ grad.studentNo || '-' }}</td>
-                  <td>{{ grad.name || '-' }}</td>
-                  <td>{{ grad.collegeName || '-' }}</td>
-                  <td>{{ grad.majorName || '-' }}</td>
-                  <td>{{ grad.graduateYear || '-' }}</td>
-                  <td>
-                    <span class="destination-tag">
-                      {{ destinationMap[grad.destination] || '未知' }}
-                    </span>
-                  </td>
-                  <td>{{ grad.destinationDetail || '-' }}</td>
-                  <td>{{ grad.certificateNo || '-' }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <el-card shadow="never">
+            <el-table
+              :data="graduates"
+              v-loading="loading.graduates"
+              border
+              stripe
+              style="width: 100%"
+              :empty-text="'暂无毕业生记录'"
+            >
+              <el-table-column prop="studentNo" label="学号" width="120" />
+              <el-table-column prop="realName" label="姓名" width="100" />
+              <el-table-column prop="collegeName" label="学院" min-width="120" />
+              <el-table-column prop="majorName" label="专业" min-width="120" />
+              <el-table-column prop="graduateYear" label="毕业年份" width="100" />
+              <el-table-column label="去向" width="80">
+                <template #default="{ row }">
+                  <el-tag type="primary" size="small">
+                    {{ destinationMap[row.destination] || '未知' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="destinationDetail" label="去向详情" min-width="150" />
+              <el-table-column prop="certificateNo" label="毕业证编号" width="160" />
+            </el-table>
+          </el-card>
         </div>
 
         <!-- 个人信息 -->
@@ -316,64 +123,56 @@ function logout() {
             <h2>个人信息</h2>
             <span class="tab-desc">{{ editMode ? '编辑个人信息' : '查看个人信息' }}</span>
           </div>
-          <div class="content-card profile-card">
-            <div v-if="!teacherInfo" class="loading-tip">加载中...</div>
-            <div v-else>
-              <div class="profile-info">
-                <div class="info-row">
-                  <label>用户名</label>
+          <el-card shadow="never" v-loading="!teacherInfo">
+            <div v-if="teacherInfo">
+              <el-form :model="editForm" label-width="100px" :disabled="!editMode">
+                <el-form-item label="用户名">
                   <span>{{ teacherInfo.username || '-' }}</span>
-                </div>
-                <div class="info-row">
-                  <label>真实姓名</label>
-                  <input v-if="editMode" v-model="editForm.name" placeholder="请输入姓名" />
+                </el-form-item>
+                <el-form-item label="真实姓名">
+                  <el-input v-if="editMode" v-model="editForm.name" placeholder="请输入姓名" />
                   <span v-else>{{ teacherInfo.realName || '-' }}</span>
-                </div>
-                <div class="info-row">
-                  <label>性别</label>
-                  <select v-if="editMode" v-model.number="editForm.gender">
-                    <option :value="0">未知</option>
-                    <option :value="1">男</option>
-                    <option :value="2">女</option>
-                  </select>
+                </el-form-item>
+                <el-form-item label="性别">
+                  <el-select v-if="editMode" v-model="editForm.gender" placeholder="请选择性别">
+                    <el-option :value="0" label="未知" />
+                    <el-option :value="1" label="男" />
+                    <el-option :value="2" label="女" />
+                  </el-select>
                   <span v-else>{{ teacherInfo.genderName || '未知' }}</span>
-                </div>
-                <div class="info-row">
-                  <label>手机号</label>
+                </el-form-item>
+                <el-form-item label="手机号">
                   <span>{{ teacherInfo.phone || '-' }}</span>
-                </div>
-                <div class="info-row">
-                  <label>工号</label>
-                  <input v-if="editMode" v-model="editForm.employeeNo" placeholder="请输入工号" />
+                </el-form-item>
+                <el-form-item label="工号">
+                  <el-input v-if="editMode" v-model="editForm.employeeNo" placeholder="请输入工号" />
                   <span v-else>{{ teacherInfo.employeeNo || '-' }}</span>
-                </div>
-                <div class="info-row">
-                  <label>职称</label>
-                  <input v-if="editMode" v-model="editForm.title" placeholder="请输入职称" />
+                </el-form-item>
+                <el-form-item label="职称">
+                  <el-input v-if="editMode" v-model="editForm.title" placeholder="请输入职称" />
                   <span v-else>{{ teacherInfo.title || '-' }}</span>
-                </div>
-                <div class="info-row">
-                  <label>学院</label>
+                </el-form-item>
+                <el-form-item label="学院">
                   <span>{{ teacherInfo.collegeName || '-' }}</span>
-                </div>
-                <div class="info-row">
-                  <label>入职时间</label>
+                </el-form-item>
+                <el-form-item label="入职时间">
                   <span>{{ teacherInfo.hireDate || '-' }}</span>
-                </div>
-                <div class="info-row">
-                  <label>用户状态</label>
-                  <span>{{ teacherInfo.statusName || (teacherInfo.userStatus === 1 ? '在职' : '离职') }}</span>
-                </div>
-              </div>
-              <div class="profile-actions" v-if="!editMode">
-                <button class="nav-btn edit-btn" @click="editMode = true">修改信息</button>
-              </div>
-              <div class="profile-actions" v-else>
-                <button class="nav-btn save-btn" @click="saveProfile">保存</button>
-                <button class="nav-btn cancel-btn" @click="cancelEdit">取消</button>
+                </el-form-item>
+                <el-form-item label="用户状态">
+                  <el-tag :type="teacherInfo.userStatus === 1 ? 'success' : 'info'" size="small">
+                    {{ teacherInfo.statusName || (teacherInfo.userStatus === 1 ? '在职' : '离职') }}
+                  </el-tag>
+                </el-form-item>
+              </el-form>
+              <div style="margin-top: 20px; text-align: center;">
+                <el-button v-if="!editMode" type="primary" @click="editMode = true">修改信息</el-button>
+                <template v-else>
+                  <el-button type="primary" @click="saveProfile">保存</el-button>
+                  <el-button @click="cancelEdit">取消</el-button>
+                </template>
               </div>
             </div>
-          </div>
+          </el-card>
         </div>
       </main>
     </div>
@@ -381,262 +180,76 @@ function logout() {
 </template>
 
 <style scoped>
-.home-layout {
-  display: flex;
-  padding-top: 60px;
-  min-height: 100vh;
-}
-
-/* ===== 侧边栏 ===== */
-.sidebar {
-  width: 200px;
-  min-width: 200px;
-  background: #fff;
-  border-right: 1px solid #e8e8e8;
+.home-page {
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
-}
-
-.sidebar-header {
-  padding: 20px 20px 12px;
-  font-size: 13px;
-  color: #999;
-  font-weight: 500;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  padding: 0 12px;
-  gap: 4px;
-}
-
-.sidebar-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  font-size: 15px;
-  color: #444;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: left;
-  width: 100%;
-}
-
-.sidebar-btn:hover {
-  background: #f0f5ff;
-  color: #1a3a5c;
-}
-
-.sidebar-btn.active {
-  background: #e6f0ff;
-  color: #1a3a5c;
-  font-weight: 600;
-}
-
-.sidebar-icon {
-  font-size: 18px;
-}
-
-/* ===== 主内容区 ===== */
-.home-main-content {
-  flex: 1;
-  padding: 24px 32px;
+  height: 100vh;
   background: #f5f7fa;
-  overflow-y: auto;
 }
-
-.tab-header {
-  margin-bottom: 20px;
-}
-
-.tab-header h2 {
-  font-size: 22px;
-  color: #1a3a5c;
-  margin: 0 0 6px;
-}
-
-.tab-desc {
-  font-size: 13px;
-  color: #999;
-}
-
-/* ===== 内容卡片 ===== */
-.content-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.loading-tip,
-.empty-tip {
-  text-align: center;
-  padding: 40px 0;
-  color: #999;
-  font-size: 14px;
-}
-
-/* ===== 表格 ===== */
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-.data-table th {
-  background: #fafafa;
-  padding: 12px 10px;
-  text-align: left;
-  font-weight: 600;
-  color: #555;
-  border-bottom: 2px solid #e8e8e8;
-  white-space: nowrap;
-}
-
-.data-table td {
-  padding: 12px 10px;
-  border-bottom: 1px solid #f0f0f0;
-  color: #333;
-}
-
-.data-table tbody tr:hover {
-  background: #fafbff;
-}
-
-/* ===== 状态徽章 ===== */
-.status-badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-active {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-
-.status-inactive {
-  background: #fbe9e7;
-  color: #c62828;
-}
-
-.destination-tag {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 10px;
-  font-size: 12px;
-  background: #e3f2fd;
-  color: #1565c0;
-}
-
-/* ===== 个人信息 ===== */
-.profile-card {
-  max-width: 600px;
-}
-
-.profile-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.info-row {
+.top-nav {
   display: flex;
   align-items: center;
-  padding: 14px 0;
-  border-bottom: 1px solid #f5f5f5;
-}
-
-.info-row label {
-  width: 100px;
-  font-size: 14px;
-  color: #888;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 56px;
+  background: #fff;
+  border-bottom: 1px solid #e4e7ed;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   flex-shrink: 0;
 }
-
-.info-row span {
-  font-size: 14px;
-  color: #333;
+.nav-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
 }
-
-.info-row input,
-.info-row select {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
-  max-width: 300px;
-}
-
-.info-row input:focus,
-.info-row select:focus {
-  border-color: #1a3a5c;
-  box-shadow: 0 0 0 2px rgba(26, 58, 92, 0.1);
-}
-
-/* ===== 操作按钮 ===== */
-.profile-actions {
-  margin-top: 24px;
+.nav-right {
   display: flex;
+  align-items: center;
   gap: 12px;
 }
-
-.edit-btn {
-  background: #1a3a5c;
-  color: #fff;
-  border: none;
-  padding: 9px 24px;
-  border-radius: 4px;
+.user-greeting {
   font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s;
+  color: #606266;
 }
-
-.edit-btn:hover {
-  background: #15314d;
+.home-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
 }
-
-.save-btn {
-  background: #1a3a5c;
-  color: #fff;
-  border: none;
-  padding: 9px 24px;
-  border-radius: 4px;
+.sidebar-menu {
+  width: 200px;
+  height: 100%;
+  border-right: 1px solid #e4e7ed;
+  flex-shrink: 0;
+}
+.sidebar-header {
+  padding: 16px 20px 8px;
   font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s;
+  color: #909399;
+  font-weight: 500;
 }
-
-.save-btn:hover {
-  background: #15314d;
+.home-main-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
 }
-
-.cancel-btn {
-  background: #fff;
-  color: #666;
-  border: 1px solid #d9d9d9;
-  padding: 9px 24px;
-  border-radius: 4px;
+.tab-content {
+  max-width: 1200px;
+}
+.tab-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.tab-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0;
+}
+.tab-desc {
   font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.cancel-btn:hover {
-  color: #333;
-  border-color: #bbb;
+  color: #909399;
 }
 </style>

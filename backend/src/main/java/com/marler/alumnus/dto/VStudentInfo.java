@@ -26,7 +26,9 @@ public class VStudentInfo {
     private String enrollDate;        // 入校时间
     private String graduateDate;      // 毕业时间（可为空）
     private String counselorName;     // 主要辅导员姓名
+    private String counselorAvatar;   // 辅导员头像URL
+    private String counselorTitle;    // 辅导员职称
     private String supervisorName;    // 主导师（学业导师）姓名
-    private String createTime;        // 创建时间
-    private String updateTime;        // 更新时间
+    private String supervisorAvatar;  // 导师头像URL
+    private String supervisorTitle;   // 导师职称
 }

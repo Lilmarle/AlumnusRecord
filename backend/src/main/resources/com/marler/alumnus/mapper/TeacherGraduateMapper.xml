@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.marler.alumnus.mapper.TeacherGraduateMapper">
+
+    <!-- 根据教师记录ID查询该教师关联的毕业生信息（使用 v_graduate_info 视图） -->
+    <select id="findGraduatesByTeacherId" resultType="com.marler.alumnus.dto.VGraduateInfo">
+        SELECT
+            v.graduate_id AS graduateId,
+            v.student_id AS studentId,
+            v.user_id AS userId,
+            v.graduate_year AS graduateYear,
+            v.destination,
+            v.destination_name AS destinationName,
+            v.destination_detail AS destinationDetail,
+            v.certificate_no AS certificateNo,
+            v.graduate_create_time AS graduateCreateTime,
+            v.graduate_update_time AS graduateUpdateTime,
+            v.student_no AS studentNo,
+            v.enroll_date AS enrollDate,
+            v.student_graduate_date AS studentGraduateDate,
+            v.username,
+            v.phone,
+            v.user_status AS userStatus,
+            v.status_name AS statusName,
+            v.real_name AS realName,
+            v.gender,
+            v.gender_name AS genderName,
+            v.avatar,
+            v.id_card AS idCard,
+            v.college_name AS collegeName,
+            v.major_name AS majorName,
+            v.class_name AS className,
+            v.grade,
+            tg.type AS teacherType,
+            v.counselor_name AS counselorName,
+            v.counselor_avatar AS counselorAvatar,
+            v.counselor_title AS counselorTitle,
+            v.supervisor_name AS supervisorName,
+            v.supervisor_avatar AS supervisorAvatar,
+            v.supervisor_title AS supervisorTitle
+        FROM teacher_graduate tg
+        INNER JOIN v_graduate_info v ON tg.graduate_id = v.graduate_id
+        WHERE tg.teacher_id = #{teacherId}
+        ORDER BY v.graduate_year DESC, v.graduate_id ASC
+    </select>
+
+    <!-- 根据用户ID查询该教师关联的毕业生信息（通过teacher表关联，使用 v_graduate_info 视图） -->
+    <select id="findGraduatesByUserId" resultType="com.marler.alumnus.dto.VGraduateInfo">
+        SELECT
+            v.graduate_id AS graduateId,
+            v.student_id AS studentId,
+            v.user_id AS userId,
+            v.graduate_year AS graduateYear,
+            v.destination,
+            v.destination_name AS destinationName,
+            v.destination_detail AS destinationDetail,
+            v.certificate_no AS certificateNo,
+            v.graduate_create_time AS graduateCreateTime,
+            v.graduate_update_time AS graduateUpdateTime,
+            v.student_no AS studentNo,
+            v.enroll_date AS enrollDate,
+            v.student_graduate_date AS studentGraduateDate,
+            v.username,
+            v.phone,
+            v.user_status AS userStatus,
+            v.status_name AS statusName,
+            v.real_name AS realName,
+            v.gender,
+            v.gender_name AS genderName,
+            v.avatar,
+            v.id_card AS idCard,
+            v.college_name AS collegeName,
+            v.major_name AS majorName,
+            v.class_name AS className,
+            v.grade,
+            tg.type AS teacherType,
+            v.counselor_name AS counselorName,
+            v.counselor_avatar AS counselorAvatar,
+            v.counselor_title AS counselorTitle,
+            v.supervisor_name AS supervisorName,
+            v.supervisor_avatar AS supervisorAvatar,
+            v.supervisor_title AS supervisorTitle
+        FROM teacher_graduate tg
+        INNER JOIN teacher t ON tg.teacher_id = t.id
+        INNER JOIN v_graduate_info v ON tg.graduate_id = v.graduate_id
+        WHERE t.user_id = #{userId}
+        ORDER BY v.graduate_year DESC, v.graduate_id ASC
+    </select>
+
+</mapper>

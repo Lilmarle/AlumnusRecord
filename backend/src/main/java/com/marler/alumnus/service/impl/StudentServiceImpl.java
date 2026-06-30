@@ -155,7 +155,6 @@ public class StudentServiceImpl implements StudentService {
             data.put("grade", updatedInfo.getGrade());
             data.put("enrollDate", updatedInfo.getEnrollDate());
             data.put("graduateDate", updatedInfo.getGraduateDate());
-            data.put("updateTime", updatedInfo.getUpdateTime());
         }
 
         // 记录哪些字段被更新了

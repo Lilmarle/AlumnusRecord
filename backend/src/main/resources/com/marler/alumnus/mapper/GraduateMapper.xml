@@ -31,31 +31,43 @@
         VALUES (#{studentId}, #{userId}, #{graduateYear}, #{destination}, #{destinationDetail}, #{certificateNo})
     </insert>
 
-    <!-- 查询所有毕业生信息（关联学生、学院、专业、班级、档案） -->
+    <!-- 查询所有毕业生信息（使用 v_graduate_info 视图） -->
     <select id="findAll" resultType="com.marler.alumnus.dto.VGraduateInfo">
         SELECT
-            g.id,
-            g.student_id AS studentId,
-            g.user_id AS userId,
-            g.graduate_year AS graduateYear,
-            g.destination,
-            g.destination_detail AS destinationDetail,
-            g.certificate_no AS certificateNo,
-            s.student_no AS studentNo,
-            up.name,
-            c.college_name AS collegeName,
-            m.major_name AS majorName,
-            cl.class_name AS className,
-            cl.grade,
-            g.create_time AS createTime,
-            g.update_time AS updateTime
-        FROM graduate g
-        LEFT JOIN student s ON g.student_id = s.id
-        LEFT JOIN user_profile up ON g.user_id = up.user_id
-        LEFT JOIN college c ON s.college_id = c.id
-        LEFT JOIN major m ON s.major_id = m.id
-        LEFT JOIN class cl ON s.class_id = cl.id
-        ORDER BY g.graduate_year DESC, g.id ASC
+            graduate_id AS graduateId,
+            student_id AS studentId,
+            user_id AS userId,
+            graduate_year AS graduateYear,
+            destination,
+            destination_name AS destinationName,
+            destination_detail AS destinationDetail,
+            certificate_no AS certificateNo,
+            graduate_create_time AS graduateCreateTime,
+            graduate_update_time AS graduateUpdateTime,
+            student_no AS studentNo,
+            enroll_date AS enrollDate,
+            student_graduate_date AS studentGraduateDate,
+            username,
+            phone,
+            user_status AS userStatus,
+            status_name AS statusName,
+            real_name AS realName,
+            gender,
+            gender_name AS genderName,
+            avatar,
+            id_card AS idCard,
+            college_name AS collegeName,
+            major_name AS majorName,
+            class_name AS className,
+            grade,
+            counselor_name AS counselorName,
+            counselor_avatar AS counselorAvatar,
+            counselor_title AS counselorTitle,
+            supervisor_name AS supervisorName,
+            supervisor_avatar AS supervisorAvatar,
+            supervisor_title AS supervisorTitle
+        FROM v_graduate_info
+        ORDER BY graduate_year DESC, graduate_id ASC
     </select>
 
     <!-- 统计毕业生去向分布（按去向分组） -->

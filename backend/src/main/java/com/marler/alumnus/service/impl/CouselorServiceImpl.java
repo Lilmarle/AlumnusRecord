@@ -101,11 +101,18 @@ public class CouselorServiceImpl implements CouselorService {
             return Result.error("用户ID不能为空");
         }
 
-        // 4. 查询辅导员完整信息
+        // 4. 先查教师记录（只要是教师就能查到）
+        Teacher teacher = teacherMapper.findByUserId(targetUserId);
+        if (teacher == null) {
+            log.warn("查询辅导员信息失败 - 未找到教师记录: userId={}", targetUserId);
+            return Result.error("未找到该教师的记录");
+        }
+
+        // 5. 再查辅导员记录，没有辅导员记录只是说明没有管理的学生
         VCouselorInfo info = couselorMapper.findCounselorInfoByUserId(targetUserId);
         if (info == null) {
-            log.warn("查询辅导员信息失败 - 未找到该教师的辅导员信息: userId={}", targetUserId);
-            return Result.error("未找到该教师的辅导员信息");
+            log.info("该教师尚未被设置为辅导员，返回基本信息 - userId: {}", targetUserId);
+            return Result.success(null);
         }
 
         log.info("查询辅导员信息成功 - userId: {}, realName: {}", targetUserId, info.getRealName());
