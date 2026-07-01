@@ -1,6 +1,7 @@
 package com.marler.alumnus.mapper;
 
 import com.marler.alumnus.dto.VGraduateInfo;
+import com.marler.alumnus.pojo.TeacherGraduate;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -18,4 +19,9 @@ public interface TeacherGraduateMapper {
      * 根据用户ID查询该教师关联的所有毕业生信息
      */
     List<VGraduateInfo> findGraduatesByUserId(@Param("userId") Integer userId);
+
+    /**
+     * 插入教师毕业生关联记录
+     */
+    int insert(TeacherGraduate teacherGraduate);
 }

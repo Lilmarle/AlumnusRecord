@@ -88,4 +88,10 @@
         ORDER BY v.graduate_year DESC, v.graduate_id ASC
     </select>
 
+    <!-- 插入教师毕业生关联记录 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO teacher_graduate (teacher_id, graduate_id, type)
+        VALUES (#{teacherId}, #{graduateId}, #{type})
+    </insert>
+
 </mapper>

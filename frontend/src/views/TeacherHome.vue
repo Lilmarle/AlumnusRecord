@@ -3,7 +3,11 @@ import { useTeacherHome } from './js/teacher-home.js'
 const {
   userInfo, activeTab, teacherInfo, students, graduates,
   editMode, editForm, loading, roleMap, destinationMap, genderMap,
-  notSupervisor, switchTab, saveProfile, cancelEdit, logout
+  notSupervisor, switchTab, saveProfile, cancelEdit, logout,
+  showAddGraduateModal, addGraduateForm, teacherStudents, addingGraduate,
+  openAddGraduateModal, submitAddGraduate,
+  showEditGraduateModal, editGraduateForm, editingGraduate,
+  openEditGraduate, submitEditGraduate
 } = useTeacherHome()
 </script>
 
@@ -89,6 +93,9 @@ const {
           <div class="tab-header">
             <h2>毕业生管理</h2>
             <span class="tab-desc">查看毕业生信息</span>
+            <el-button type="primary" size="small" @click="openAddGraduateModal" style="margin-left: auto;">
+              添加毕业生
+            </el-button>
           </div>
           <el-card shadow="never">
             <el-table
@@ -113,8 +120,106 @@ const {
               </el-table-column>
               <el-table-column prop="destinationDetail" label="去向详情" min-width="150" />
               <el-table-column prop="certificateNo" label="毕业证编号" width="160" />
+              <el-table-column label="操作" width="70" fixed="right">
+                <template #default="{ row }">
+                  <el-button type="primary" link size="small" @click="openEditGraduate(row)">修改</el-button>
+                </template>
+              </el-table-column>
             </el-table>
           </el-card>
+
+          <!-- 添加毕业生弹窗 -->
+          <el-dialog
+            v-model="showAddGraduateModal"
+            title="添加毕业生"
+            width="550px"
+            :close-on-click-modal="false"
+          >
+            <el-form :model="addGraduateForm" label-width="100px">
+              <el-form-item label="选择学生" required>
+                <el-select
+                  v-model="addGraduateForm.studentId"
+                  placeholder="请选择学生"
+                  style="width: 100%"
+                  filterable
+                >
+                  <el-option
+                    v-for="s in teacherStudents"
+                    :key="s.stuId"
+                    :value="s.stuId"
+                    :label="`${s.studentName || s.name || '-'}（${s.studentNo || ''}）`"
+                  />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="毕业年份" required>
+                <el-input-number
+                  v-model="addGraduateForm.graduateYear"
+                  :min="2000"
+                  :max="2099"
+                  :step="1"
+                  controls-position="right"
+                  placeholder="请输入毕业年份"
+                  style="width: 100%"
+                />
+              </el-form-item>
+              <el-form-item label="去向" required>
+                <el-select v-model="addGraduateForm.destination" placeholder="请选择去向" style="width: 100%">
+                  <el-option :value="1" label="就业" />
+                  <el-option :value="2" label="考公" />
+                  <el-option :value="3" label="考研" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="去向详情">
+                <el-input v-model="addGraduateForm.destinationDetail" placeholder="请输入去向详情（如单位名称/学校名称）" />
+              </el-form-item>
+              <el-form-item label="毕业证编号">
+                <el-input v-model="addGraduateForm.certificateNo" placeholder="请输入毕业证书编号" />
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <el-button @click="showAddGraduateModal = false">取消</el-button>
+              <el-button type="primary" @click="submitAddGraduate" :loading="addingGraduate">确认添加</el-button>
+            </template>
+          </el-dialog>
+
+          <!-- 修改毕业生弹窗 -->
+          <el-dialog
+            v-model="showEditGraduateModal"
+            title="修改毕业生信息"
+            width="550px"
+            :close-on-click-modal="false"
+          >
+            <el-form :model="editGraduateForm" label-width="100px">
+              <el-form-item label="毕业年份" required>
+                <el-input-number
+                  v-model="editGraduateForm.graduateYear"
+                  :min="2000"
+                  :max="2099"
+                  :step="1"
+                  controls-position="right"
+                  placeholder="请输入毕业年份"
+                  style="width: 100%"
+                />
+              </el-form-item>
+              <el-form-item label="去向" required>
+                <el-select v-model="editGraduateForm.destination" placeholder="请选择去向" style="width: 100%">
+                  <el-option :value="1" label="就业" />
+                  <el-option :value="2" label="考公" />
+                  <el-option :value="3" label="考研" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="去向详情">
+                <el-input v-model="editGraduateForm.destinationDetail" placeholder="请输入去向详情（如单位名称/学校名称）" />
+              </el-form-item>
+              <el-form-item label="毕业证编号">
+                <el-input v-model="editGraduateForm.certificateNo" placeholder="请输入毕业证书编号" />
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <el-button @click="showEditGraduateModal = false">取消</el-button>
+              <el-button type="primary" @click="submitEditGraduate" :loading="editingGraduate">保存修改</el-button>
+            </template>
+          </el-dialog>
         </div>
 
         <!-- 个人信息 -->

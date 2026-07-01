@@ -1,6 +1,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { get, post } from '@/api/index.js'
+import { get, post, put } from '@/api/index.js'
 
 export function useAdminHome() {
   const router = useRouter()
@@ -38,6 +38,32 @@ export function useAdminHome() {
     const cls = (dictData.value.classes || []).find(c => c.id === editStudentForm.value.classId)
     return cls ? cls.grade : ''
   })
+
+  // 添加毕业生相关状态
+  const showAddGraduateModal = ref(false)
+  const addGraduateForm = ref({
+    studentId: null,
+    graduateYear: null,
+    destination: null,
+    destinationDetail: '',
+    certificateNo: '',
+    teacherId: null,
+    teacherType: null
+  })
+  const allStudents = ref([])
+  const allTeachers = ref([])
+  const addingGraduate = ref(false)
+
+  // 修改毕业生相关状态
+  const showEditGraduateModal = ref(false)
+  const editGraduateForm = ref({
+    id: null,
+    graduateYear: null,
+    destination: null,
+    destinationDetail: '',
+    certificateNo: ''
+  })
+  const editingGraduate = ref(false)
 
   const loading = ref({ students: false, graduates: false })
   const roleMap = { 1: '学生', 2: '老师', 3: '管理员' }
@@ -178,6 +204,110 @@ export function useAdminHome() {
     graduateDetail.value = null
   }
 
+  /** 加载所有学生列表（供添加毕业生时选择） */
+  async function loadAllStudents() {
+    try {
+      const res = await get('/student/list')
+      if (res.code === 1) allStudents.value = res.data || []
+    } catch (e) {
+      console.error('加载学生列表失败:', e)
+    }
+  }
+
+  /** 加载所有教师列表（供添加毕业生时选择关联教师） */
+  async function loadAllTeachers() {
+    try {
+      const res = await get('/teacher/list')
+      if (res.code === 1) allTeachers.value = res.data || []
+    } catch (e) {
+      console.error('加载教师列表失败:', e)
+    }
+  }
+
+  async function openAddGraduateModal() {
+    addGraduateForm.value = {
+      studentId: null,
+      graduateYear: null,
+      destination: null,
+      destinationDetail: '',
+      certificateNo: '',
+      teacherId: null,
+      teacherType: null
+    }
+    showAddGraduateModal.value = true
+    await Promise.all([loadAllStudents(), loadAllTeachers()])
+  }
+
+  async function submitAddGraduate() {
+    const f = addGraduateForm.value
+    if (!f.studentId) { alert('请选择学生'); return }
+    if (!f.graduateYear) { alert('请输入毕业年份'); return }
+    if (!f.destination) { alert('请选择去向'); return }
+    if (!f.teacherId) { alert('请选择关联教师'); return }
+    if (!f.teacherType) { alert('请选择教师类型'); return }
+    addingGraduate.value = true
+    try {
+      const res = await post('/graduate/add', {
+        studentId: f.studentId,
+        graduateYear: f.graduateYear,
+        destination: f.destination,
+        destinationDetail: f.destinationDetail || null,
+        certificateNo: f.certificateNo || null,
+        teacherId: f.teacherId,
+        teacherType: f.teacherType
+      })
+      if (res.code === 1) {
+        showAddGraduateModal.value = false
+        alert('添加毕业生成功')
+        await loadGraduates()
+      } else {
+        alert(res.message || '添加失败')
+      }
+    } catch (e) {
+      alert('添加失败: ' + e.message)
+    } finally {
+      addingGraduate.value = false
+    }
+  }
+
+  function openEditGraduate(graduate) {
+    editGraduateForm.value = {
+      id: graduate.graduateId || graduate.id,
+      graduateYear: graduate.graduateYear,
+      destination: graduate.destination,
+      destinationDetail: graduate.destinationDetail || '',
+      certificateNo: graduate.certificateNo || ''
+    }
+    showEditGraduateModal.value = true
+  }
+
+  async function submitEditGraduate() {
+    const f = editGraduateForm.value
+    if (!f.graduateYear) { alert('请输入毕业年份'); return }
+    if (!f.destination) { alert('请选择去向'); return }
+    editingGraduate.value = true
+    try {
+      const res = await put('/graduate/update', {
+        id: f.id,
+        graduateYear: f.graduateYear,
+        destination: f.destination,
+        destinationDetail: f.destinationDetail || null,
+        certificateNo: f.certificateNo || null
+      })
+      if (res.code === 1) {
+        showEditGraduateModal.value = false
+        alert('修改毕业生信息成功')
+        await loadGraduates()
+      } else {
+        alert(res.message || '修改失败')
+      }
+    } catch (e) {
+      alert('修改失败: ' + e.message)
+    } finally {
+      editingGraduate.value = false
+    }
+  }
+
   function cancelEdit() {
     editMode.value = false
     if (userInfo.value) editForm.value = { name: userInfo.value.username || '', gender: 0 }
@@ -196,6 +326,10 @@ export function useAdminHome() {
     loading, roleMap, genderMap, destinationMap,
     showGraduateDetail, graduateDetail,
     switchTab, openEditStudent, saveStudent, saveProfile, cancelEdit, logout,
-    openGraduateDetail, closeGraduateDetail
+    openGraduateDetail, closeGraduateDetail,
+    showAddGraduateModal, addGraduateForm, allStudents, allTeachers, addingGraduate,
+    openAddGraduateModal, submitAddGraduate,
+    showEditGraduateModal, editGraduateForm, editingGraduate,
+    openEditGraduate, submitEditGraduate
   }
 }

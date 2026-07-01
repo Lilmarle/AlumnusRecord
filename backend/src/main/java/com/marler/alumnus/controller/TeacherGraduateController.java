@@ -1,8 +1,10 @@
 package com.marler.alumnus.controller;
 
+import com.marler.alumnus.dto.GraduateAddDTO;
 import com.marler.alumnus.mapper.UserMapper;
 import com.marler.alumnus.pojo.Result;
 import com.marler.alumnus.pojo.User;
+import com.marler.alumnus.service.GraduateService;
 import com.marler.alumnus.service.TeacherGraduateService;
 import com.marler.alumnus.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
@@ -16,6 +18,9 @@ public class TeacherGraduateController {
 
     @Autowired
     private TeacherGraduateService teacherGraduateService;
+
+    @Autowired
+    private GraduateService graduateService;
 
     @Autowired
     private UserMapper userMapper;
@@ -71,6 +76,33 @@ public class TeacherGraduateController {
         } catch (Exception e) {
             log.error("查询教师关联的毕业生信息失败", e);
             return Result.error("查询失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 教师添加自己的学生为毕业生
+     * POST /teacher/graduates/add
+     */
+    @PostMapping("/teacher/graduates/add")
+    public Result addMyGraduate(
+            @RequestHeader("Authorization") String authorization,
+            @RequestBody GraduateAddDTO dto) {
+        try {
+            log.info("教师添加毕业生请求 - studentId: {}", dto.getStudentId());
+
+            Claims claims = JwtUtils.parseToken(authorization.replace("Bearer ", ""));
+            Integer tokenUserId = Integer.valueOf(claims.getSubject());
+
+            User user = userMapper.findById(tokenUserId);
+            if (user == null) return Result.error("用户不存在");
+            if (user.getRole() != 2) return Result.error("权限不足，仅教师角色可添加毕业生");
+
+            Result result = graduateService.addGraduate(dto, tokenUserId, user.getRole());
+            log.info("教师添加毕业生结果 - code: {}, message: {}", result.getCode(), result.getMessage());
+            return result;
+        } catch (Exception e) {
+            log.error("教师添加毕业生失败", e);
+            return Result.error("教师添加毕业生失败：" + e.getMessage());
         }
     }
 }

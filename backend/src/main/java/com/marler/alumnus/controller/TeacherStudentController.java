@@ -23,10 +23,9 @@ public class TeacherStudentController {
     @GetMapping("/teacher-student/list")
     public Result getStudentsByTeacher(
             @RequestHeader("Authorization") String authorization,
-            @RequestParam("teacherId") Integer teacherId,
-            @RequestParam("type") Integer type) {
+            @RequestParam("teacherId") Integer teacherId) {
         try {
-            log.info("查询教师关联的学生列表请求 - teacherId: {}, type: {}", teacherId, type);
+            log.info("查询教师关联的学生列表请求 - teacherId: {}", teacherId);
 
             Claims claims = JwtUtils.parseToken(authorization.replace("Bearer ", ""));
             Integer tokenUserId = Integer.valueOf(claims.getSubject());
@@ -35,7 +34,7 @@ public class TeacherStudentController {
             if (user == null) return Result.error("用户不存在");
             if (user.getRole() < 2) return Result.error("权限不足");
 
-            return teacherStudentService.getStudentsByTeacher(teacherId, type);
+            return teacherStudentService.getStudentsByTeacher(teacherId);
         } catch (Exception e) {
             log.error("查询教师关联的学生列表失败", e);
             return Result.error("查询失败：" + e.getMessage());

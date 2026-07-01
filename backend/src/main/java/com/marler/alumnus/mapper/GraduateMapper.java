@@ -26,6 +26,11 @@ public interface GraduateMapper {
     int insert(Graduate graduate);
 
     /**
+     * 更新毕业生记录
+     */
+    int updateById(Graduate graduate);
+
+    /**
      * 查询所有毕业生信息（关联学生、学院、专业、班级、档案）
      */
     List<VGraduateInfo> findAll();

@@ -31,6 +31,16 @@
         VALUES (#{studentId}, #{userId}, #{graduateYear}, #{destination}, #{destinationDetail}, #{certificateNo})
     </insert>
 
+    <!-- 更新毕业生记录 -->
+    <update id="updateById">
+        UPDATE graduate
+        SET graduate_year = #{graduateYear},
+            destination = #{destination},
+            destination_detail = #{destinationDetail},
+            certificate_no = #{certificateNo}
+        WHERE id = #{id}
+    </update>
+
     <!-- 查询所有毕业生信息（使用 v_graduate_info 视图） -->
     <select id="findAll" resultType="com.marler.alumnus.dto.VGraduateInfo">
         SELECT

@@ -1,5 +1,6 @@
 package com.marler.alumnus.mapper;
 
+import com.marler.alumnus.pojo.TeacherStudent;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -10,9 +11,16 @@ import java.util.Map;
 public interface TeacherStudentMapper {
 
     /**
-     * 根据教师ID和类型查询关联的学生列表
+     * 根据教师ID查询关联的学生列表
      * @param teacherId 教师记录ID
-     * @param type 类型：1-辅导员，2-导师
      */
-    List<Map<String, Object>> findStudentsByTeacherId(@Param("teacherId") Integer teacherId, @Param("type") Integer type);
+    List<Map<String, Object>> findStudentsByTeacherId(@Param("teacherId") Integer teacherId);
+
+    /**
+     * 根据学生记录ID和教师记录ID查询关联关系
+     * @param studentId 学生记录ID
+     * @param teacherId 教师记录ID
+     * @return 教师学生关联记录
+     */
+    TeacherStudent findByStudentIdAndTeacherId(@Param("studentId") Integer studentId, @Param("teacherId") Integer teacherId);
 }

@@ -12,7 +12,7 @@
         <result property="updateTime" column="update_time"/>
     </resultMap>
 
-    <!-- 根据教师ID和类型查询关联的学生列表 -->
+    <!-- 根据教师ID查询关联的学生列表 -->
     <select id="findStudentsByTeacherId" resultType="java.util.Map">
         SELECT
             ts.id AS relationId,
@@ -34,8 +34,15 @@
         LEFT JOIN major m ON s.major_id = m.id
         LEFT JOIN class cl ON s.class_id = cl.id
         WHERE ts.teacher_id = #{teacherId}
-          AND ts.type = #{type}
         ORDER BY ts.create_time DESC
+    </select>
+
+    <!-- 根据学生记录ID和教师记录ID查询关联关系 -->
+    <select id="findByStudentIdAndTeacherId" resultMap="teacherStudentMap">
+        SELECT id, student_id, teacher_id, type, create_time, update_time
+        FROM teacher_student
+        WHERE student_id = #{studentId}
+          AND teacher_id = #{teacherId}
     </select>
 
 </mapper>
